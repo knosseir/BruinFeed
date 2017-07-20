@@ -14,7 +14,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.GridView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -26,19 +31,25 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    //ArrayList diningHalls = new ArrayList();
-    Set<Element> diningHalls = new HashSet<>();
+    final String url = "http://menu.dining.ucla.edu/Menus";
+
+    Set<Element> diningHallLinks = new HashSet<>();
+    ArrayList<String> diningHallNames = new ArrayList<>();
+
+    ArrayAdapter<String> gridViewArrayAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        GridView diningHallGrid = (GridView) findViewById(R.id.diningHallGrid);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -63,6 +74,17 @@ public class MainActivity extends AppCompatActivity
 
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute("hello");
+
+        gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, diningHallNames);
+        diningHallGrid.setAdapter(gridViewArrayAdapter);
+
+        diningHallGrid.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Object obj = parent.getItemAtPosition(position);
+                    Toast.makeText(getBaseContext(), obj.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -103,17 +125,11 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        if (id == R.id.nav_breakfast) {
             // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        } else if (id == R.id.nav_lunch) {
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.nav_dinner) {
 
         }
 
@@ -123,9 +139,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void setTimeString() {
-        String currentTimeString = DateFormat.getDateTimeInstance().format(new Date());
-        TextView time = (TextView) findViewById(R.id.currentTime);
-        time.setText(currentTimeString);
+        // String currentTimeString = DateFormat.getDateTimeInstance().format(new Date());
+        // TextView time = (TextView) findViewById(R.id.currentTime);
+        // time.setText(currentTimeString);
     }
 
     private class AsyncTaskRunner extends AsyncTask<String, String, String> {
@@ -133,29 +149,32 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected String doInBackground(String... params) {
             try {
-                String url = "http://menu.dining.ucla.edu/Menus";
                 Document doc = Jsoup.connect(url).get();
-
-                String title = doc.title();
-                Log.d("title", title);
-
                 Elements links = doc.select("a[href]");
 
                 for (Element link : links) {
                     Log.d("link titles", link.attr("href"));
-                    if (link.attr("href").contains("/Menus/")) {
-                        diningHalls.add(link);
+                    String name = link.attr("href");
+                    if (name.contains("/Menus/") && !name.contains("Breakfast")
+                            && !name.contains("Lunch") && !name.contains("Dinner") && !name.contains("Full Menu")) {       // TODO: FIND BETTER WAY TO FILTER OUT BREAKFAST, LUNCH, AND DINNER LINKS FROM DINING HALL LIST
+                        diningHallLinks.add(link);
+                        diningHallNames.add(name);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                gridViewArrayAdapter.notifyDataSetChanged();
+                            }
+                        });
                     }
                 }
-                Log.d("number of dining halls", "size: " + diningHalls.size());
+                Log.d("number of dining halls", "size: " + diningHallNames.size());
 
-            }
-
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.e("error", "This should never happen");
             }
 
-            return "sup";
+            return "success";
         }
     }
 }
