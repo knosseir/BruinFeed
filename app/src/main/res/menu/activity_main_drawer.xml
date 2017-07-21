@@ -5,15 +5,15 @@
         <item
             android:id="@+id/nav_breakfast"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:title="Breakfast" />
         <item
             android:id="@+id/nav_lunch"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
+            android:title="Lunch" />
         <item
             android:id="@+id/nav_dinner"
             android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:title="Dinner" />
     </group>
 
     <item android:title="Communicate">

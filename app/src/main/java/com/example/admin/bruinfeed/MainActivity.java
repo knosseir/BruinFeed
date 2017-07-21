@@ -1,5 +1,6 @@
 package com.example.admin.bruinfeed;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -27,6 +28,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -78,11 +80,16 @@ public class MainActivity extends AppCompatActivity
         gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, diningHallNames);
         diningHallGrid.setAdapter(gridViewArrayAdapter);
 
-        diningHallGrid.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+        diningHallGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Object obj = parent.getItemAtPosition(position);
-                    Toast.makeText(getBaseContext(), obj.toString(), Toast.LENGTH_SHORT).show();
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Object obj = parent.getItemAtPosition(position);
+                Toast.makeText(getBaseContext(), obj.toString(), Toast.LENGTH_SHORT).show();
+
+                // launch menu based on the dining hall selected
+                Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
+                diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
+                startActivity(diningHallMenuIntent);
             }
         });
     }
@@ -159,22 +166,40 @@ public class MainActivity extends AppCompatActivity
                             && !name.contains("Lunch") && !name.contains("Dinner") && !name.contains("Full Menu")) {       // TODO: FIND BETTER WAY TO FILTER OUT BREAKFAST, LUNCH, AND DINNER LINKS FROM DINING HALL LIST
                         diningHallLinks.add(link);
                         diningHallNames.add(name);
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                gridViewArrayAdapter.notifyDataSetChanged();
-                            }
-                        });
                     }
                 }
-                Log.d("number of dining halls", "size: " + diningHallNames.size());
 
-            } catch (IOException e) {
+                // remove duplicates from diningHallNames ArrayList
+                Set<String> diningHallTemp = new HashSet<>();
+                diningHallTemp.addAll(diningHallNames);
+                diningHallNames.clear();
+                diningHallNames.addAll(diningHallTemp);
+
+                // update GridView with list of dining halls on UI thread
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        gridViewArrayAdapter.notifyDataSetChanged();
+                    }
+                });
+
+            } catch (IOException | IllegalArgumentException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e("error", "This should never happen");
+                Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallGrid), R.string.retry_connection, Snackbar.LENGTH_INDEFINITE);
+                reloadSnackbar.setAction(R.string.reconnecting, new ReconnectListener());
+                reloadSnackbar.show();
             }
 
             return "success";
+        }
+    }
+
+    public class ReconnectListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+            Intent reconnectionIntent = new Intent(getBaseContext(), MainActivity.class);
+            startActivity(reconnectionIntent);
         }
     }
 }
