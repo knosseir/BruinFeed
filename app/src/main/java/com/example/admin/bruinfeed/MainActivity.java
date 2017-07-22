@@ -72,8 +72,6 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        setTimeString();
-
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute("hello");
 
@@ -133,7 +131,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_breakfast) {
-            // Handle the camera action
+
         } else if (id == R.id.nav_lunch) {
 
         } else if (id == R.id.nav_dinner) {
@@ -143,12 +141,6 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    public void setTimeString() {
-        // String currentTimeString = DateFormat.getDateTimeInstance().format(new Date());
-        // TextView time = (TextView) findViewById(R.id.currentTime);
-        // time.setText(currentTimeString);
     }
 
     private class AsyncTaskRunner extends AsyncTask<String, String, String> {
@@ -174,6 +166,14 @@ public class MainActivity extends AppCompatActivity
                 diningHallTemp.addAll(diningHallNames);
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
+
+                /*
+                // remove "/Menus/" from dining hall names
+                for (String s : diningHallNames) {
+                    s.replace("/Menus/", "");
+                    Log.e("names", s);
+                }
+                */
 
                 // update GridView with list of dining halls on UI thread
                 runOnUiThread(new Runnable() {

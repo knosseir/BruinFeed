@@ -8,6 +8,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -17,6 +19,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -25,8 +28,9 @@ import java.util.Set;
 public class DiningHallActivity extends AppCompatActivity {
 
     String url, meal;
+    ArrayList<String> menuItemNames = new ArrayList<>();
 
-    private TextView mTextMessage;
+    ArrayAdapter<String> gridViewArrayAdapter;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -35,13 +39,10 @@ public class DiningHallActivity extends AppCompatActivity {
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.bottom_breakfast_button:
-                    mTextMessage.setText(R.string.title_breakfast);
                     return true;
                 case R.id.bottom_lunch_button:
-                    mTextMessage.setText(R.string.title_lunch);
                     return true;
                 case R.id.bottom_dinner_button:
-                    mTextMessage.setText(R.string.title_dinner);
                     return true;
             }
             return false;
@@ -54,11 +55,11 @@ public class DiningHallActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dining_hall);
 
-        mTextMessage = (TextView) findViewById(R.id.message);
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         String selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
+        setTitle(selectedDiningHall);
 
         // get current hour of day
         Calendar cal = Calendar.getInstance();
@@ -73,39 +74,35 @@ public class DiningHallActivity extends AppCompatActivity {
             navigation.setSelectedItemId(R.id.bottom_lunch_button);
             meal = "Lunch";
         }
-        else if (currentHour < 21) {
+        else {
             navigation.setSelectedItemId(R.id.bottom_dinner_button);
             meal = "Dinner";
         }
 
-        url = selectedDiningHall + "/" + meal;
+        url = "http://menu.dining.ucla.edu" + selectedDiningHall + "/" + meal;
         Log.e("URL", url);
+
+        DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
+        runner.execute("hello");
+
+        GridView menuItemGrid = (GridView) findViewById(R.id.menuGrid);
+
+        gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, menuItemNames);
+        menuItemGrid.setAdapter(gridViewArrayAdapter);
     }
 
-    /*
     private class AsyncTaskRunner extends AsyncTask<String, String, String> {
 
         @Override
         protected String doInBackground(String... params) {
             try {
                 Document doc = Jsoup.connect(url).get();
-                Elements links = doc.select("a[href]");
+                Elements links = doc.select("a.recipeLink");
 
                 for (Element link : links) {
-                    Log.d("link titles", link.attr("href"));
-                    String name = link.attr("href");
-                    if (name.contains("/Menus/") && !name.contains("Breakfast")
-                            && !name.contains("Lunch") && !name.contains("Dinner") && !name.contains("Full Menu")) {       // TODO: FIND BETTER WAY TO FILTER OUT BREAKFAST, LUNCH, AND DINNER LINKS FROM DINING HALL LIST
-                        diningHallLinks.add(link);
-                        diningHallNames.add(name);
-                    }
+                    menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
+                    Log.e("menu item", link.ownText());
                 }
-
-                // remove duplicates from diningHallNames ArrayList
-                Set<String> diningHallTemp = new HashSet<>();
-                diningHallTemp.addAll(diningHallNames);
-                diningHallNames.clear();
-                diningHallNames.addAll(diningHallTemp);
 
                 // update GridView with list of dining halls on UI thread
                 runOnUiThread(new Runnable() {
@@ -117,13 +114,9 @@ public class DiningHallActivity extends AppCompatActivity {
 
             } catch (IOException | IllegalArgumentException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e("error", "This should never happen");
-                Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallGrid), R.string.retry_connection, Snackbar.LENGTH_INDEFINITE);
-                reloadSnackbar.setAction(R.string.reconnecting, new MainActivity.ReconnectListener());
-                reloadSnackbar.show();
             }
 
             return "success";
         }
     }
-    */
 }
