@@ -54,7 +54,8 @@ public class DiningHallActivity extends AppCompatActivity {
                     meal = "Dinner";
                     break;
             }
-            url = "http://menu.dining.ucla.edu" + selectedDiningHall + "/" + meal;
+            url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
+            Log.e("URL", url);
 
             DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
             runner.execute(url);
@@ -92,7 +93,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
         selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
 
-        url = "http://menu.dining.ucla.edu" + selectedDiningHall + "/" + meal;
+        url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
         Log.e("URL", url);
 
         DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();

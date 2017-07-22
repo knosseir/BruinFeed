@@ -1,6 +1,9 @@
 package com.example.admin.bruinfeed;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -32,8 +35,10 @@ import java.net.MalformedURLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity
@@ -42,7 +47,7 @@ public class MainActivity extends AppCompatActivity
     final String url = "http://menu.dining.ucla.edu/Menus";
 
     ArrayList<String> diningHallNames = new ArrayList<>();
-
+    Map<String, Integer> activityLevels = new HashMap<>();
     ArrayAdapter<String> gridViewArrayAdapter;
 
     @Override
@@ -71,8 +76,13 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        if (!isOnline()) {
+            reload(R.string.no_internet);
+            return;
+        }
+
         AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.execute("hello");
+        runner.execute(url);
 
         gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, diningHallNames);
         diningHallGrid.setAdapter(gridViewArrayAdapter);
@@ -80,10 +90,8 @@ public class MainActivity extends AppCompatActivity
         diningHallGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Object obj = parent.getItemAtPosition(position);
-                Toast.makeText(getBaseContext(), obj.toString(), Toast.LENGTH_SHORT).show();
-
                 // launch menu based on the dining hall selected
+                Object obj = parent.getItemAtPosition(position);
                 Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
                 diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
                 startActivity(diningHallMenuIntent);
@@ -147,26 +155,12 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected String doInBackground(String... params) {
             try {
-                Document doc = Jsoup.connect(url).get();
-                Elements links = doc.select("a[href]");
+                Document doc = Jsoup.connect(params[0]).get();
+                getActivityLevels(doc);
 
-                for (Element link : links) {
-                    Log.d("link titles", link.attr("href"));
-                    String name = link.attr("href");
-                    if (name.contains("/Menus/") && !name.contains("Breakfast")
-                            && !name.contains("Lunch") && !name.contains("Dinner") && !name.contains("Full Menu")) {       // TODO: FIND BETTER WAY TO FILTER OUT BREAKFAST, LUNCH, AND DINNER LINKS FROM DINING HALL LIST
-                        diningHallNames.add(name);
-                    }
-                }
-
-                /*
-                for (Element link : links) {
-                    Log.d("link titles", link.attr("href"));
-                    if (link.ownText().equals("MENUS & NUTRITION")) {
-
-                    }
-                }
-                */
+                Elements diningHalls = doc.select("h3");
+                for (Element element : diningHalls)
+                    diningHallNames.add(element.ownText());
 
                 // remove duplicates from diningHallNames ArrayList
                 Set<String> diningHallTemp = new HashSet<>();
@@ -184,19 +178,49 @@ public class MainActivity extends AppCompatActivity
 
             } catch (IOException | IllegalArgumentException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e("error", "This should never happen");
-                Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallGrid), R.string.retry_connection, Snackbar.LENGTH_INDEFINITE);
-                reloadSnackbar.setAction(R.string.reconnecting, new ReconnectListener());
-                reloadSnackbar.show();
+                reload(R.string.retry_connection);
             }
 
             return "success";
         }
+
+        public boolean getActivityLevels(Document doc) {
+            Elements diningHalls = doc.select("div.menu-block half-col");
+            Log.e("size", diningHalls.size() + "");
+            for (Element element : diningHalls) {
+                for (Element e : element.getElementsMatchingOwnText("Activity Level")) {
+                    activityLevels.put(element.child(0).ownText(), Integer.parseInt(e.ownText()));
+                }
+            }
+
+            for (Map.Entry<String, Integer> entry : activityLevels.entrySet()) {
+                Log.e("key and value", entry.getKey() + " " + entry.getValue());
+            }
+
+            return true;
+        }
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        return false;
+    }
+
+    public void reload(int error){
+        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallGrid), error, Snackbar.LENGTH_INDEFINITE);
+        reloadSnackbar.setAction(R.string.retry, new ReconnectListener());
+        reloadSnackbar.show();
     }
 
     public class ReconnectListener implements View.OnClickListener {
 
         @Override
         public void onClick(View v) {
+            finish();
             Intent reconnectionIntent = new Intent(getBaseContext(), MainActivity.class);
             startActivity(reconnectionIntent);
         }

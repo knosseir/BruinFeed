@@ -10,5 +10,6 @@
     <string name="title_lunch">Lunch</string>
     <string name="title_dinner">Dinner</string>
     <string name="retry_connection">An error occurred. Please try again.</string>
-    <string name="reconnecting">Retry</string>
+    <string name="retry">Retry</string>
+    <string name="no_internet">Your device is offline.</string>
 </resources>
