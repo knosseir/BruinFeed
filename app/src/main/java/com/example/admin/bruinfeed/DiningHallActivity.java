@@ -1,5 +1,6 @@
 package com.example.admin.bruinfeed;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,9 +9,12 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,9 +32,11 @@ import java.util.Set;
 public class DiningHallActivity extends AppCompatActivity {
 
     String url, meal;
+    GridView menuItemGrid;
     ArrayList<String> menuItemNames = new ArrayList<>();
 
     ArrayAdapter<String> gridViewArrayAdapter;
+    String selectedDiningHall;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -39,13 +45,21 @@ public class DiningHallActivity extends AppCompatActivity {
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.bottom_breakfast_button:
-                    return true;
+                    meal = "Breakfast";
+                    break;
                 case R.id.bottom_lunch_button:
-                    return true;
+                    meal = "Lunch";
+                    break;
                 case R.id.bottom_dinner_button:
-                    return true;
+                    meal = "Dinner";
+                    break;
             }
-            return false;
+            url = "http://menu.dining.ucla.edu" + selectedDiningHall + "/" + meal;
+
+            DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
+            runner.execute(url);
+
+            return true;
         }
 
     };
@@ -57,9 +71,6 @@ public class DiningHallActivity extends AppCompatActivity {
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
-        String selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
-        setTitle(selectedDiningHall);
 
         // get current hour of day
         Calendar cal = Calendar.getInstance();
@@ -79,13 +90,15 @@ public class DiningHallActivity extends AppCompatActivity {
             meal = "Dinner";
         }
 
+        selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
+
         url = "http://menu.dining.ucla.edu" + selectedDiningHall + "/" + meal;
         Log.e("URL", url);
 
         DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
-        runner.execute("hello");
+        runner.execute(url);
 
-        GridView menuItemGrid = (GridView) findViewById(R.id.menuGrid);
+        menuItemGrid = (GridView) findViewById(R.id.menuGrid);
 
         gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, menuItemNames);
         menuItemGrid.setAdapter(gridViewArrayAdapter);
@@ -96,19 +109,21 @@ public class DiningHallActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                Document doc = Jsoup.connect(url).get();
+                Document doc = Jsoup.connect(params[0]).get();
                 Elements links = doc.select("a.recipeLink");
+                menuItemNames.clear();
 
                 for (Element link : links) {
                     menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
                     Log.e("menu item", link.ownText());
                 }
 
-                // update GridView with list of dining halls on UI thread
+                // update GridView with menu and set action bar title on UI thread
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         gridViewArrayAdapter.notifyDataSetChanged();
+                        setTitle(meal + " at " + selectedDiningHall);
                     }
                 });
 

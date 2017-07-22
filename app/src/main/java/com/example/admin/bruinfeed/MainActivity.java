@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity
 
     final String url = "http://menu.dining.ucla.edu/Menus";
 
-    Set<Element> diningHallLinks = new HashSet<>();
     ArrayList<String> diningHallNames = new ArrayList<>();
 
     ArrayAdapter<String> gridViewArrayAdapter;
@@ -156,24 +155,24 @@ public class MainActivity extends AppCompatActivity
                     String name = link.attr("href");
                     if (name.contains("/Menus/") && !name.contains("Breakfast")
                             && !name.contains("Lunch") && !name.contains("Dinner") && !name.contains("Full Menu")) {       // TODO: FIND BETTER WAY TO FILTER OUT BREAKFAST, LUNCH, AND DINNER LINKS FROM DINING HALL LIST
-                        diningHallLinks.add(link);
                         diningHallNames.add(name);
                     }
                 }
+
+                /*
+                for (Element link : links) {
+                    Log.d("link titles", link.attr("href"));
+                    if (link.ownText().equals("MENUS & NUTRITION")) {
+
+                    }
+                }
+                */
 
                 // remove duplicates from diningHallNames ArrayList
                 Set<String> diningHallTemp = new HashSet<>();
                 diningHallTemp.addAll(diningHallNames);
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
-
-                /*
-                // remove "/Menus/" from dining hall names
-                for (String s : diningHallNames) {
-                    s.replace("/Menus/", "");
-                    Log.e("names", s);
-                }
-                */
 
                 // update GridView with list of dining halls on UI thread
                 runOnUiThread(new Runnable() {
