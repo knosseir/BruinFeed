@@ -14,11 +14,17 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <GridView
-            android:id="@+id/menuGrid"
+        <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/menuGridRefresh"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </GridView>
+            android:layout_height="match_parent">
+
+            <GridView
+                android:id="@+id/menuGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </android.support.v4.widget.SwipeRefreshLayout>
 
     </FrameLayout>
 

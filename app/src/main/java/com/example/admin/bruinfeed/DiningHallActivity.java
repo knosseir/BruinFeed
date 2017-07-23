@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,6 +39,8 @@ public class DiningHallActivity extends AppCompatActivity {
 
     ArrayAdapter<String> gridViewArrayAdapter;
     String selectedDiningHall;
+
+    SwipeRefreshLayout menuGridRefresh;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -73,6 +77,8 @@ public class DiningHallActivity extends AppCompatActivity {
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
+        menuGridRefresh = (SwipeRefreshLayout) findViewById(R.id.menuGridRefresh);
+
         // get current hour of day
         Calendar cal = Calendar.getInstance();
         int currentHour = cal.get(Calendar.HOUR_OF_DAY);
@@ -103,6 +109,18 @@ public class DiningHallActivity extends AppCompatActivity {
 
         gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, menuItemNames);
         menuItemGrid.setAdapter(gridViewArrayAdapter);
+
+        menuGridRefresh.setRefreshing(true);
+        // refreshes menu grid upon pull to refresh
+        menuGridRefresh.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+                        asyncTaskRunner.execute(url);
+                    }
+                }
+        );
     }
 
     private class AsyncTaskRunner extends AsyncTask<String, String, String> {
@@ -119,20 +137,47 @@ public class DiningHallActivity extends AppCompatActivity {
                     Log.e("menu item", link.ownText());
                 }
 
-                // update GridView with menu and set action bar title on UI thread
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        gridViewArrayAdapter.notifyDataSetChanged();
-                        setTitle(meal + " at " + selectedDiningHall);
-                    }
-                });
+                updateGrid();
 
-            } catch (IOException | IllegalArgumentException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
-                Log.e("error", "This should never happen");
+            } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
+                Log.e("error", e.toString());
+                updateGrid();
+                reload(R.string.connection_timeout);
+            } catch (IOException | IllegalArgumentException e) {
+                Log.e("error", e.toString());
+                updateGrid();
+                reload(R.string.retry_connection);
             }
 
             return "success";
+        }
+    }
+
+    public void updateGrid() {
+        // update GridView with menu and set action bar title on UI thread
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                gridViewArrayAdapter.notifyDataSetChanged();
+                setTitle(meal + " at " + selectedDiningHall);
+                menuGridRefresh.setRefreshing(false);
+            }
+        });
+    }
+
+    public void reload(int error) {
+        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.menuGrid), error, Snackbar.LENGTH_INDEFINITE);
+        reloadSnackbar.setAction(R.string.retry, new ReconnectListener());
+        reloadSnackbar.show();
+    }
+
+    public class ReconnectListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+            menuGridRefresh.setRefreshing(true);
+            AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+            asyncTaskRunner.execute(url);
         }
     }
 }

@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -32,6 +33,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.example.admin.bruinfeed.R.id.diningHallGrid;
+import static com.example.admin.bruinfeed.R.id.diningHallGridRefresh;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity
     ArrayList<String> diningHallNames = new ArrayList<>();
     Map<String, Integer> activityLevels = new HashMap<>();
     ArrayAdapter<String> gridViewArrayAdapter;
+    SwipeRefreshLayout diningHallGridRefresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +62,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         GridView diningHallGrid = (GridView) findViewById(R.id.diningHallGrid);
+        diningHallGridRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallGridRefresh);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -87,16 +94,28 @@ public class MainActivity extends AppCompatActivity
         gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, diningHallNames);
         diningHallGrid.setAdapter(gridViewArrayAdapter);
 
+        // launch menu based on the dining hall selected
         diningHallGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // launch menu based on the dining hall selected
                 Object obj = parent.getItemAtPosition(position);
                 Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
                 diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
                 startActivity(diningHallMenuIntent);
             }
         });
+
+        diningHallGridRefresh.setRefreshing(true);
+        // refreshes dining hall grid upon pull to refresh
+        diningHallGridRefresh.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+                        asyncTaskRunner.execute(url);
+                    }
+                }
+        );
     }
 
     @Override
@@ -105,7 +124,8 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            // super.onBackPressed();
+            setContentView(R.layout.activity_main);
         }
     }
 
@@ -168,16 +188,15 @@ public class MainActivity extends AppCompatActivity
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
 
-                // update GridView with list of dining halls on UI thread
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        gridViewArrayAdapter.notifyDataSetChanged();
-                    }
-                });
+                updateGrid();
 
-            } catch (IOException | IllegalArgumentException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
-                Log.e("error", "This should never happen");
+            } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
+                Log.e("error", e.toString());
+                updateGrid();
+                reload(R.string.connection_timeout);
+            } catch (IOException | IllegalArgumentException e) {
+                Log.e("error", e.toString());
+                updateGrid();
                 reload(R.string.retry_connection);
             }
 
@@ -201,6 +220,17 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public void updateGrid() {
+        // update GridView with list of dining halls on UI thread
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                gridViewArrayAdapter.notifyDataSetChanged();
+                diningHallGridRefresh.setRefreshing(false);
+            }
+        });
+    }
+
     public boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
@@ -210,7 +240,7 @@ public class MainActivity extends AppCompatActivity
         return false;
     }
 
-    public void reload(int error){
+    public void reload(int error) {
         Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallGrid), error, Snackbar.LENGTH_INDEFINITE);
         reloadSnackbar.setAction(R.string.retry, new ReconnectListener());
         reloadSnackbar.show();
@@ -220,9 +250,9 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onClick(View v) {
-            finish();
-            Intent reconnectionIntent = new Intent(getBaseContext(), MainActivity.class);
-            startActivity(reconnectionIntent);
+            diningHallGridRefresh.setRefreshing(true);
+            AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+            asyncTaskRunner.execute(url);
         }
     }
 }
