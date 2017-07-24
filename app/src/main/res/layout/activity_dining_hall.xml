@@ -15,14 +15,15 @@
         android:layout_weight="1">
 
         <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/menuGridRefresh"
+            android:id="@+id/menuRefresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <GridView
-                android:id="@+id/menuGrid"
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/menuRecyclerView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="match_parent"
+                android:scrollbars="vertical" />
 
         </android.support.v4.widget.SwipeRefreshLayout>
 

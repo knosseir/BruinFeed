@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeight"
-    android:layout_marginBottom="12dp">
+    android:layout_height="?android:attr/listPreferredItemHeight">
 
     <ImageView
         android:id="@+id/icon"
@@ -23,7 +22,8 @@
         android:layout_toRightOf="@id/icon"
         android:ellipsize="marquee"
         android:maxLines="1"
-        android:textSize="16sp" />
+        android:text="Description"
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/firstLine"
@@ -35,6 +35,7 @@
         android:layout_alignWithParentIfMissing="true"
         android:layout_toRightOf="@id/icon"
         android:gravity="center_vertical"
-        android:textSize="24sp" />
+        android:text="Example application"
+        android:textSize="16sp" />
 
 </RelativeLayout>

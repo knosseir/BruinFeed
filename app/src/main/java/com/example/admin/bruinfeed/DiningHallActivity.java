@@ -1,5 +1,7 @@
 package com.example.admin.bruinfeed;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -7,11 +9,16 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.TextView;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -22,19 +29,22 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class DiningHallActivity extends AppCompatActivity {
 
     private static final String DiningHallTag = "DiningHallActivity";
 
     String url, meal;
-    GridView menuItemGrid;
     ArrayList<String> menuItemNames = new ArrayList<>();
 
-    ArrayAdapter<String> gridViewArrayAdapter;
     String selectedDiningHall;
 
-    SwipeRefreshLayout menuGridRefresh;
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+
+    SwipeRefreshLayout menuRefresh;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -55,7 +65,7 @@ public class DiningHallActivity extends AppCompatActivity {
             url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
             Log.e(DiningHallTag, url);
 
-            menuGridRefresh.setRefreshing(true);
+            menuRefresh.setRefreshing(true);
             DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
             runner.execute(url);
 
@@ -72,7 +82,13 @@ public class DiningHallActivity extends AppCompatActivity {
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        menuGridRefresh = (SwipeRefreshLayout) findViewById(R.id.menuGridRefresh);
+        recyclerView = (RecyclerView) findViewById(R.id.menuRecyclerView);
+        mLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new MenuAdapter(menuItemNames);
+        recyclerView.setAdapter(mAdapter);
+
+        menuRefresh = (SwipeRefreshLayout) findViewById(R.id.menuRefresh);
 
         // get current hour of day
         Calendar cal = Calendar.getInstance();
@@ -92,23 +108,23 @@ public class DiningHallActivity extends AppCompatActivity {
             meal = "Dinner";
         }
 
+        // TODO: CHOOSE MEAL BASED ON DINING PERIODS FOR EACH DINING HALL
+
         selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
 
         url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
         Log.e(DiningHallTag, url);
         setTitle(meal + " at " + selectedDiningHall);
 
+        menuRefresh.setRefreshing(true);
+
         DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
         runner.execute(url);
 
-        menuItemGrid = (GridView) findViewById(R.id.menuGrid);
+        menuRefresh.setColorSchemeColors(Color.rgb(244, 205, 65));
 
-        gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, menuItemNames);
-        menuItemGrid.setAdapter(gridViewArrayAdapter);
-
-        menuGridRefresh.setRefreshing(true);
-        // refreshes menu grid upon pull to refresh
-        menuGridRefresh.setOnRefreshListener(
+        // refreshes menu upon pull to refresh
+        menuRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
@@ -124,17 +140,17 @@ public class DiningHallActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                menuItemNames.clear();
                 Document doc = Jsoup.connect(params[0]).get();
                 Elements links = doc.select("a.recipeLink");
+                menuItemNames.clear();
 
                 for (Element link : links) {
                     menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
-                    Log.e(DiningHallTag, link.ownText());
                 }
 
-                updateGrid();
+                updateMenuRecyclerView();
 
+                /*
                 if (menuItemNames.isEmpty()) {
                     final Snackbar emptyMenuSnackbar = Snackbar.make(findViewById(R.id.menuGrid), R.string.empty_menu, Snackbar.LENGTH_INDEFINITE);
                     emptyMenuSnackbar.setAction("OK", new View.OnClickListener() {
@@ -145,14 +161,15 @@ public class DiningHallActivity extends AppCompatActivity {
                     });
                     emptyMenuSnackbar.show();
                 }
+                */
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e(DiningHallTag, e.toString());
-                updateGrid();
+                updateMenuRecyclerView();
                 reload(R.string.connection_timeout);
             } catch (IOException | IllegalArgumentException e) {
                 Log.e(DiningHallTag, e.toString());
-                updateGrid();
+                updateMenuRecyclerView();
                 reload(R.string.retry_connection);
             }
 
@@ -160,28 +177,95 @@ public class DiningHallActivity extends AppCompatActivity {
         }
     }
 
-    public void updateGrid() {
-        // update GridView with menu and set action bar title on UI thread
+    public void updateMenuRecyclerView() {
+        // update RecyclerView with menu and set action bar title on UI thread
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                gridViewArrayAdapter.notifyDataSetChanged();
+                mAdapter.notifyDataSetChanged();
                 setTitle(meal + " at " + selectedDiningHall);
-                menuGridRefresh.setRefreshing(false);
+                menuRefresh.setRefreshing(false);
             }
         });
     }
 
     public void reload(int error) {
-        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.menuGrid), error, Snackbar.LENGTH_INDEFINITE);
+        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.menuRecyclerView), error, Snackbar.LENGTH_INDEFINITE);
         reloadSnackbar.setAction(R.string.retry, new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        menuGridRefresh.setRefreshing(true);
+                        menuRefresh.setRefreshing(true);
                         AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
                         asyncTaskRunner.execute(url);
                     }
                 });
                 reloadSnackbar.show();
+    }
+
+    public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
+        private List<String> values;
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            TextView header;
+            TextView footer;
+            View menuLayout;
+
+            public ViewHolder(View v) {
+                super(v);
+                menuLayout = v;
+                header = (TextView) v.findViewById(R.id.firstLine);
+                footer = (TextView) v.findViewById(R.id.secondLine);
+            }
+        }
+
+        public void add(int position, String item) {
+            values.add(position, item);
+            notifyItemInserted(position);
+        }
+
+        public void remove(int position) {
+            values.remove(position);
+            notifyItemRemoved(position);
+        }
+
+        public String getItemAtPosition(int position) {
+            return values.get(position);
+        }
+
+        public MenuAdapter(List<String> data) {
+            values = data;
+        }
+
+        @Override
+        public MenuAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            // create a new view
+            LayoutInflater inflater = LayoutInflater.from(
+                    parent.getContext());
+            View v = inflater.inflate(R.layout.menu_row, parent, false);
+            // set the view's size, margins, paddings and layout parameters
+            ViewHolder vh = new ViewHolder(v);
+            return vh;
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, final int position) {
+            // - get element from dataset at this position
+            // - replace the contents of the view with that element
+            final String name = values.get(position);
+            holder.header.setText(name);
+            holder.header.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
+
+            holder.footer.setText("Hours: " + name);
+        }
+
+        @Override
+        public int getItemCount() {
+            return values.size();
+        }
     }
 }

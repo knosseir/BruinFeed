@@ -2,6 +2,7 @@ package com.example.admin.bruinfeed;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -46,11 +47,12 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String MainTag = "MainActivity";
-    static final String url = "http://menu.dining.ucla.edu/Menus";
+    private static final String url = "http://menu.dining.ucla.edu/Menus";
+    private static final String hoursUrl = "";
 
-    ArrayList<String> diningHallNames = new ArrayList<>();
-    Map<String, Integer> activityLevels = new HashMap<>();
-    SwipeRefreshLayout diningHallRefresh;
+    private ArrayList<String> diningHallNames = new ArrayList<>();
+    private Map<String, Integer> activityLevels = new HashMap<>();
+    private SwipeRefreshLayout diningHallRefresh;
 
     private RecyclerView recyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -88,20 +90,18 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        if (!isOnline()) {
-            reload(R.string.no_internet);
-            return;
-        }
-
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute(url);
 
-        diningHallRefresh.setRefreshing(true);
+        diningHallRefresh.setColorSchemeColors(Color.rgb(244, 205, 65));
+
         // refreshes dining hall grid upon pull to refresh
+        diningHallRefresh.setRefreshing(true);
         diningHallRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
+                        // retrieve new data upon pull to refresh
                         AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
                         asyncTaskRunner.execute(url);
                     }
@@ -166,6 +166,11 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected String doInBackground(String... params) {
             try {
+                if (!isOnline()) {
+                    reload(R.string.no_internet);
+                    return "No internet connection!";
+                }
+
                 Document doc = Jsoup.connect(params[0]).get();
                 // getActivityLevels(doc);
 
@@ -178,18 +183,30 @@ public class MainActivity extends AppCompatActivity
                 diningHallTemp.addAll(diningHallNames);
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
+                
+                updateRecyclerView();
 
+                // ------------------------------------------------------- //
 
+                /*
+                Document hoursDoc = Jsoup.connect("http://menu.dining.ucla.edu/Hours").get();
 
-                updateGrid();
+                Elements breakfastHours = hoursDoc.select("td.hours-open Breakfast");
+
+                Element breakfastHours, lunchHours, dinnerHours;
+
+                for (Element e : diningHours) {
+
+                }
+                */
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e(MainTag, e.toString());
-                updateGrid();
+                updateRecyclerView();
                 reload(R.string.connection_timeout);
             } catch (IOException | IllegalArgumentException e) {
                 Log.e(MainTag, e.toString());
-                updateGrid();
+                updateRecyclerView();
                 reload(R.string.retry_connection);
             }
 
@@ -213,7 +230,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void updateGrid() {
+    public void updateRecyclerView() {
         // update dining hall RecyclerView with list of dining halls on UI thread
         runOnUiThread(new Runnable() {
             @Override
@@ -293,7 +310,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onBindViewHolder(ViewHolder holder, final int position) {
-            // - get element from your dataset at this position
+            // - get element from dataset at this position
             // - replace the contents of the view with that element
             final String name = values.get(position);
             holder.header.setText(name);
