@@ -1,6 +1,5 @@
 package com.example.admin.bruinfeed;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -11,11 +10,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -24,14 +20,12 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 public class DiningHallActivity extends AppCompatActivity {
+
+    private static final String DiningHallTag = "DiningHallActivity";
 
     String url, meal;
     GridView menuItemGrid;
@@ -59,8 +53,9 @@ public class DiningHallActivity extends AppCompatActivity {
                     break;
             }
             url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
-            Log.e("URL", url);
+            Log.e(DiningHallTag, url);
 
+            menuGridRefresh.setRefreshing(true);
             DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
             runner.execute(url);
 
@@ -100,7 +95,8 @@ public class DiningHallActivity extends AppCompatActivity {
         selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
 
         url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
-        Log.e("URL", url);
+        Log.e(DiningHallTag, url);
+        setTitle(meal + " at " + selectedDiningHall);
 
         DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
         runner.execute(url);
@@ -128,23 +124,34 @@ public class DiningHallActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
+                menuItemNames.clear();
                 Document doc = Jsoup.connect(params[0]).get();
                 Elements links = doc.select("a.recipeLink");
-                menuItemNames.clear();
 
                 for (Element link : links) {
                     menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
-                    Log.e("menu item", link.ownText());
+                    Log.e(DiningHallTag, link.ownText());
                 }
 
                 updateGrid();
 
+                if (menuItemNames.isEmpty()) {
+                    final Snackbar emptyMenuSnackbar = Snackbar.make(findViewById(R.id.menuGrid), R.string.empty_menu, Snackbar.LENGTH_INDEFINITE);
+                    emptyMenuSnackbar.setAction("OK", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            emptyMenuSnackbar.dismiss();
+                        }
+                    });
+                    emptyMenuSnackbar.show();
+                }
+
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
-                Log.e("error", e.toString());
+                Log.e(DiningHallTag, e.toString());
                 updateGrid();
                 reload(R.string.connection_timeout);
             } catch (IOException | IllegalArgumentException e) {
-                Log.e("error", e.toString());
+                Log.e(DiningHallTag, e.toString());
                 updateGrid();
                 reload(R.string.retry_connection);
             }
@@ -167,17 +174,14 @@ public class DiningHallActivity extends AppCompatActivity {
 
     public void reload(int error) {
         Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.menuGrid), error, Snackbar.LENGTH_INDEFINITE);
-        reloadSnackbar.setAction(R.string.retry, new ReconnectListener());
-        reloadSnackbar.show();
-    }
-
-    public class ReconnectListener implements View.OnClickListener {
-
-        @Override
-        public void onClick(View v) {
-            menuGridRefresh.setRefreshing(true);
-            AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-            asyncTaskRunner.execute(url);
-        }
+        reloadSnackbar.setAction(R.string.retry, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        menuGridRefresh.setRefreshing(true);
+                        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+                        asyncTaskRunner.execute(url);
+                    }
+                });
+                reloadSnackbar.show();
     }
 }

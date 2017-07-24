@@ -9,14 +9,15 @@
     tools:showIn="@layout/app_bar_main">
 
     <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/diningHallGridRefresh"
+        android:id="@+id/diningHallRefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <GridView
-            android:id="@+id/diningHallGrid"
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/diningHallRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"
+            android:scrollbars="vertical" />
 
     </android.support.v4.widget.SwipeRefreshLayout>
 

@@ -9,7 +9,10 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -19,12 +22,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.GridView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -32,38 +34,41 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.example.admin.bruinfeed.R.id.diningHallGrid;
-import static com.example.admin.bruinfeed.R.id.diningHallGridRefresh;
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    final String url = "http://menu.dining.ucla.edu/Menus";
+    private static final String MainTag = "MainActivity";
+    static final String url = "http://menu.dining.ucla.edu/Menus";
 
     ArrayList<String> diningHallNames = new ArrayList<>();
     Map<String, Integer> activityLevels = new HashMap<>();
-    ArrayAdapter<String> gridViewArrayAdapter;
-    SwipeRefreshLayout diningHallGridRefresh;
+    SwipeRefreshLayout diningHallRefresh;
+
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        GridView diningHallGrid = (GridView) findViewById(R.id.diningHallGrid);
-        diningHallGridRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallGridRefresh);
+        diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
+
+        recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
+        mLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new DiningHallAdapter(diningHallNames);
+        recyclerView.setAdapter(mAdapter);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -91,23 +96,9 @@ public class MainActivity extends AppCompatActivity
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute(url);
 
-        gridViewArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, diningHallNames);
-        diningHallGrid.setAdapter(gridViewArrayAdapter);
-
-        // launch menu based on the dining hall selected
-        diningHallGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Object obj = parent.getItemAtPosition(position);
-                Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
-                diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
-                startActivity(diningHallMenuIntent);
-            }
-        });
-
-        diningHallGridRefresh.setRefreshing(true);
+        diningHallRefresh.setRefreshing(true);
         // refreshes dining hall grid upon pull to refresh
-        diningHallGridRefresh.setOnRefreshListener(
+        diningHallRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
@@ -124,8 +115,8 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            // super.onBackPressed();
-            setContentView(R.layout.activity_main);
+            super.onBackPressed();
+            // setContentView(R.layout.activity_main);      // TODO: FIX UPPER BACK BUTTON BEHAVIOR (DON'T REFRESH ENTIRE MAINACTIVITY)
         }
     }
 
@@ -176,7 +167,7 @@ public class MainActivity extends AppCompatActivity
         protected String doInBackground(String... params) {
             try {
                 Document doc = Jsoup.connect(params[0]).get();
-                getActivityLevels(doc);
+                // getActivityLevels(doc);
 
                 Elements diningHalls = doc.select("h3");
                 for (Element element : diningHalls)
@@ -188,14 +179,16 @@ public class MainActivity extends AppCompatActivity
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
 
+
+
                 updateGrid();
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
-                Log.e("error", e.toString());
+                Log.e(MainTag, e.toString());
                 updateGrid();
                 reload(R.string.connection_timeout);
             } catch (IOException | IllegalArgumentException e) {
-                Log.e("error", e.toString());
+                Log.e(MainTag, e.toString());
                 updateGrid();
                 reload(R.string.retry_connection);
             }
@@ -205,7 +198,7 @@ public class MainActivity extends AppCompatActivity
 
         public boolean getActivityLevels(Document doc) {
             Elements diningHalls = doc.select("div.menu-block half-col");
-            Log.e("size", diningHalls.size() + "");
+            Log.e(MainTag, diningHalls.size() + "");
             for (Element element : diningHalls) {
                 for (Element e : element.getElementsMatchingOwnText("Activity Level")) {
                     activityLevels.put(element.child(0).ownText(), Integer.parseInt(e.ownText()));
@@ -213,7 +206,7 @@ public class MainActivity extends AppCompatActivity
             }
 
             for (Map.Entry<String, Integer> entry : activityLevels.entrySet()) {
-                Log.e("key and value", entry.getKey() + " " + entry.getValue());
+                Log.e(MainTag, entry.getKey() + " " + entry.getValue());
             }
 
             return true;
@@ -221,12 +214,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void updateGrid() {
-        // update GridView with list of dining halls on UI thread
+        // update dining hall RecyclerView with list of dining halls on UI thread
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                gridViewArrayAdapter.notifyDataSetChanged();
-                diningHallGridRefresh.setRefreshing(false);
+                mAdapter.notifyDataSetChanged();
+                diningHallRefresh.setRefreshing(false);
             }
         });
     }
@@ -241,18 +234,85 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void reload(int error) {
-        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallGrid), error, Snackbar.LENGTH_INDEFINITE);
-        reloadSnackbar.setAction(R.string.retry, new ReconnectListener());
+        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.diningHallRecyclerView), error, Snackbar.LENGTH_INDEFINITE);
+        reloadSnackbar.setAction(R.string.retry, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                diningHallRefresh.setRefreshing(true);
+                AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+                asyncTaskRunner.execute(url);
+            }
+        });
         reloadSnackbar.show();
     }
 
-    public class ReconnectListener implements View.OnClickListener {
+    public class DiningHallAdapter extends RecyclerView.Adapter<DiningHallAdapter.ViewHolder> {
+        private List<String> values;
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            TextView header;
+            TextView footer;
+            View diningHallLayout;
+
+            public ViewHolder(View v) {
+                super(v);
+                diningHallLayout = v;
+                header = (TextView) v.findViewById(R.id.firstLine);
+                footer = (TextView) v.findViewById(R.id.secondLine);
+            }
+        }
+
+        public void add(int position, String item) {
+            values.add(position, item);
+            notifyItemInserted(position);
+        }
+
+        public void remove(int position) {
+            values.remove(position);
+            notifyItemRemoved(position);
+        }
+
+        public String getItemAtPosition(int position) {
+            return values.get(position);
+        }
+
+        public DiningHallAdapter(List<String> data) {
+            values = data;
+        }
 
         @Override
-        public void onClick(View v) {
-            diningHallGridRefresh.setRefreshing(true);
-            AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-            asyncTaskRunner.execute(url);
+        public DiningHallAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            // create a new view
+            LayoutInflater inflater = LayoutInflater.from(
+                    parent.getContext());
+            View v = inflater.inflate(R.layout.dining_hall_row, parent, false);
+            // set the view's size, margins, paddings and layout parameters
+            ViewHolder vh = new ViewHolder(v);
+            return vh;
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, final int position) {
+            // - get element from your dataset at this position
+            // - replace the contents of the view with that element
+            final String name = values.get(position);
+            holder.header.setText(name);
+            holder.header.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Object obj = getItemAtPosition(position);
+                    Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
+                    diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
+                    startActivity(diningHallMenuIntent);
+                }
+            });
+
+            holder.footer.setText("Hours: " + name);
+        }
+
+        @Override
+        public int getItemCount() {
+            return values.size();
         }
     }
 }
