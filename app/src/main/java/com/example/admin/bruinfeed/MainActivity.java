@@ -39,6 +39,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,10 +49,9 @@ public class MainActivity extends AppCompatActivity
 
     private static final String MainTag = "MainActivity";
     private static final String url = "http://menu.dining.ucla.edu/Menus";
-    private static final String hoursUrl = "";
 
     private ArrayList<String> diningHallNames = new ArrayList<>();
-    private Map<String, Integer> activityLevels = new HashMap<>();
+    public Map<String, Integer> activityLevelMap = new HashMap<>();
     private SwipeRefreshLayout diningHallRefresh;
 
     private RecyclerView recyclerView;
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
-            // setContentView(R.layout.activity_main);      // TODO: FIX UPPER BACK BUTTON BEHAVIOR (DON'T REFRESH ENTIRE MAINACTIVITY)
+            // setContentView(R.layout.content_main);      // TODO: FIX UPPER BACK BUTTON BEHAVIOR (DON'T REFRESH ENTIRE MAINACTIVITY)
         }
     }
 
@@ -171,33 +171,38 @@ public class MainActivity extends AppCompatActivity
                     return "No internet connection!";
                 }
 
-                Document doc = Jsoup.connect(params[0]).get();
-                // getActivityLevels(doc);
+                Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
 
                 Elements diningHalls = doc.select("h3");
                 for (Element element : diningHalls)
                     diningHallNames.add(element.ownText());
 
                 // remove duplicates from diningHallNames ArrayList
-                Set<String> diningHallTemp = new HashSet<>();
-                diningHallTemp.addAll(diningHallNames);
+                Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
-                
+
+                getActivityLevels(doc);
+
                 updateRecyclerView();
 
                 // ------------------------------------------------------- //
 
                 /*
-                Document hoursDoc = Jsoup.connect("http://menu.dining.ucla.edu/Hours").get();
+                Map<String, String> breakfastHours = new HashMap<>();
+                Map<String, String> lunchHours = new HashMap<>();
+                Map<String, String> dinnerHours = new HashMap<>();
 
-                Elements breakfastHours = hoursDoc.select("td.hours-open Breakfast");
 
-                Element breakfastHours, lunchHours, dinnerHours;
+                Document hoursDoc = Jsoup.connect("http://menu.dining.ucla.edu/Hours").timeout(10 * 1000).get();
 
-                for (Element e : diningHours) {
+                Elements diningHours = hoursDoc.select("span.hours-location");
+                Elements bHours = hoursDoc.select("td.hours-head");
+                Elements lHours = hoursDoc.select("td.hours-open Lunch");
+                Elements dHours = hoursDoc.select("td.hours-open Dinner");
 
-                }
+                Elements els = hoursDoc.select("td.hours-open Breakfast");
+                Log.e("SIZE", bHours.size() + "");
                 */
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
@@ -211,19 +216,18 @@ public class MainActivity extends AppCompatActivity
             }
 
             return "success";
-        }
+    }
 
         public boolean getActivityLevels(Document doc) {
-            Elements diningHalls = doc.select("div.menu-block half-col");
-            Log.e(MainTag, diningHalls.size() + "");
-            for (Element element : diningHalls) {
-                for (Element e : element.getElementsMatchingOwnText("Activity Level")) {
-                    activityLevels.put(element.child(0).ownText(), Integer.parseInt(e.ownText()));
-                }
-            }
+            Elements levels = doc.getElementsMatchingOwnText("Activity Level");
 
-            for (Map.Entry<String, Integer> entry : activityLevels.entrySet()) {
-                Log.e(MainTag, entry.getKey() + " " + entry.getValue());
+            Log.e("tag", levels.size() + "");
+
+            //if (diningHallNames.size() != levels.size())
+              //  return false;
+
+            for (int i = 0; i < levels.size(); i++) {       // TODO: MAKE SURE ORDER IS THE SAME
+                activityLevelMap.put(diningHallNames.get(i), Integer.parseInt(levels.get(i).parent().ownText().replaceAll("[: %]", "")));
             }
 
             return true;
@@ -320,6 +324,7 @@ public class MainActivity extends AppCompatActivity
                     Object obj = getItemAtPosition(position);
                     Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
                     diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
+                    diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
                     startActivity(diningHallMenuIntent);
                 }
             });

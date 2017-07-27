@@ -18,12 +18,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -36,13 +38,17 @@ public class DiningHallActivity extends AppCompatActivity {
     private static final String DiningHallTag = "DiningHallActivity";
 
     String url, meal;
+    int activityLevel = 0;
     ArrayList<String> menuItemNames = new ArrayList<>();
+    TextView activityLeveLTextView;
 
     String selectedDiningHall;
 
     private RecyclerView recyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+
+    private ProgressBar activityLevelProgressBar;
 
     SwipeRefreshLayout menuRefresh;
 
@@ -90,6 +96,8 @@ public class DiningHallActivity extends AppCompatActivity {
 
         menuRefresh = (SwipeRefreshLayout) findViewById(R.id.menuRefresh);
 
+        activityLeveLTextView = (TextView) findViewById(R.id.activityLevelTextBox);
+
         // get current hour of day
         Calendar cal = Calendar.getInstance();
         int currentHour = cal.get(Calendar.HOUR_OF_DAY);
@@ -111,6 +119,8 @@ public class DiningHallActivity extends AppCompatActivity {
         // TODO: CHOOSE MEAL BASED ON DINING PERIODS FOR EACH DINING HALL
 
         selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
+        activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
+        activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
 
         url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
         Log.e(DiningHallTag, url);
@@ -140,7 +150,7 @@ public class DiningHallActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                Document doc = Jsoup.connect(params[0]).get();
+                Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
                 Elements links = doc.select("a.recipeLink");
                 menuItemNames.clear();
 
@@ -184,6 +194,13 @@ public class DiningHallActivity extends AppCompatActivity {
             public void run() {
                 mAdapter.notifyDataSetChanged();
                 setTitle(meal + " at " + selectedDiningHall);
+                if (activityLevel == 0) {
+                    activityLeveLTextView.setText("Activity Level at " + selectedDiningHall + " is unavailable");
+                }
+                else {
+                    activityLeveLTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
+                }
+                activityLevelProgressBar.setProgress(activityLevel);
                 menuRefresh.setRefreshing(false);
             }
         });

@@ -8,27 +8,47 @@
     android:orientation="vertical"
     tools:context="com.example.admin.bruinfeed.DiningHallActivity">
 
-    <FrameLayout
-        android:id="@+id/content"
+    <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/menuRefresh"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1">
 
-        <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/menuRefresh"
+        <RelativeLayout
+            android:id="@+id/content"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/activityLevelTextBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_centerHorizontal="true"
+                android:text="Activity Level"/>
+
+            <ProgressBar
+                android:id="@+id/activityLevel"
+                android:theme="@style/LinearProgress"
+                android:layout_below="@id/activityLevelTextBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                style="@android:style/Widget.ProgressBar.Horizontal" />
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/menuRecyclerView"
+                android:layout_below="@id/activityLevel"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="vertical"
-                android:background="?android:attr/selectableItemBackground"/>
+                android:scrollbars="vertical" />
 
-        </android.support.v4.widget.SwipeRefreshLayout>
+        </RelativeLayout>
 
-    </FrameLayout>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation"
