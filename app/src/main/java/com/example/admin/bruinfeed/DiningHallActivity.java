@@ -123,7 +123,6 @@ public class DiningHallActivity extends AppCompatActivity {
         activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
 
         url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
-        Log.e(DiningHallTag, url);
         setTitle(meal + " at " + selectedDiningHall);
 
         menuRefresh.setRefreshing(true);

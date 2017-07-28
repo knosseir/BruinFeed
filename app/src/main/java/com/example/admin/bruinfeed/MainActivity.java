@@ -24,9 +24,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.GridView;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -36,11 +33,17 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,7 +54,17 @@ public class MainActivity extends AppCompatActivity
     private static final String url = "http://menu.dining.ucla.edu/Menus";
 
     private ArrayList<String> diningHallNames = new ArrayList<>();
-    public Map<String, Integer> activityLevelMap = new HashMap<>();
+    private Map<String, Integer> activityLevelMap = new HashMap<>();
+
+    private Map<String, Time> breakfastOpeningHours = new HashMap<>();
+    private Map<String, Time> breakfastClosingHours = new HashMap<>();
+
+    private Map<String, Time> lunchOpeningHours = new HashMap<>();
+    private Map<String, Time> lunchClosingHours = new HashMap<>();
+
+    private Map<String, Time> dinnerOpeningHours = new HashMap<>();
+    private Map<String, Time> dinnerClosingHours = new HashMap<>();
+
     private SwipeRefreshLayout diningHallRefresh;
 
     private RecyclerView recyclerView;
@@ -184,26 +197,9 @@ public class MainActivity extends AppCompatActivity
 
                 getActivityLevels(doc);
 
+                getHours();
+
                 updateRecyclerView();
-
-                // ------------------------------------------------------- //
-
-                /*
-                Map<String, String> breakfastHours = new HashMap<>();
-                Map<String, String> lunchHours = new HashMap<>();
-                Map<String, String> dinnerHours = new HashMap<>();
-
-
-                Document hoursDoc = Jsoup.connect("http://menu.dining.ucla.edu/Hours").timeout(10 * 1000).get();
-
-                Elements diningHours = hoursDoc.select("span.hours-location");
-                Elements bHours = hoursDoc.select("td.hours-head");
-                Elements lHours = hoursDoc.select("td.hours-open Lunch");
-                Elements dHours = hoursDoc.select("td.hours-open Dinner");
-
-                Elements els = hoursDoc.select("td.hours-open Breakfast");
-                Log.e("SIZE", bHours.size() + "");
-                */
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e(MainTag, e.toString());
@@ -216,18 +212,82 @@ public class MainActivity extends AppCompatActivity
             }
 
             return "success";
-    }
+        }
 
         public boolean getActivityLevels(Document doc) {
             Elements levels = doc.getElementsMatchingOwnText("Activity Level");
 
-            Log.e("tag", levels.size() + "");
-
             //if (diningHallNames.size() != levels.size())
-              //  return false;
+            //  return false;
 
-            for (int i = 0; i < levels.size(); i++) {       // TODO: MAKE SURE ORDER IS THE SAME
+            for (int i = 0; i < levels.size(); i++) {
                 activityLevelMap.put(diningHallNames.get(i), Integer.parseInt(levels.get(i).parent().ownText().replaceAll("[: %]", "")));
+            }
+
+            return true;
+        }
+
+        public boolean getHours() {
+            try {
+                Document hoursDoc = Jsoup.connect("http://menu.dining.ucla.edu/Hours").timeout(10 * 1000).get();
+                Elements elements = hoursDoc.select("td.hours-head");
+                Elements parents = new Elements();
+
+                for (Element e : elements) {
+                    parents.add(e.parent());
+                }
+
+                for (Element e : parents) {
+                    String diningHall = e.select("span.hours-location").text();
+
+                    Elements elems = e.select("span.hours-range");
+
+                    for (Element f : elems) {
+                        String meal = f.parent().className().replace("hours-open ", "");
+                        String range = f.text();
+
+                        DateFormat format = new SimpleDateFormat("hh:mm a", Locale.US);
+                        int count = 0;
+
+                        String[] s = range.split(" - ");
+                        Date date;
+                        Time openTime = new Time(00);
+                        Time closeTime = new Time(00);
+                        for (String j : s) {
+                            date = format.parse(j);
+                            if (count == 0)
+                                openTime = new Time(date.getTime());
+                            else if (count == 1)
+                                closeTime = new Time(date.getTime());
+                            count++;
+                        }
+
+                        switch (meal) {
+                            case ("Breakfast"):
+                                breakfastOpeningHours.put(diningHall, openTime);
+                                breakfastClosingHours.put(diningHall, closeTime);
+                                // Log.e("Breakfast at " + diningHall, openTime + " to " + closeTime);
+                                break;
+                            case ("Lunch"):
+                                lunchOpeningHours.put(diningHall, openTime);
+                                lunchClosingHours.put(diningHall, closeTime);
+                                // Log.e("Lunch at " + diningHall, openTime + " to " + closeTime);
+                                break;
+                            case ("Dinner"):
+                                dinnerOpeningHours.put(diningHall, openTime);
+                                dinnerClosingHours.put(diningHall, closeTime);
+                                // Log.e("Dinner at " + diningHall, openTime + " to " + closeTime);
+                                break;
+                            default:
+                                return false;
+                        }
+                    }
+                }
+
+            } catch (IOException e) {
+                Log.e(MainTag, e.toString());
+            } catch (ParseException e) {
+                Log.e(MainTag, e.toString());
             }
 
             return true;
@@ -329,7 +389,50 @@ public class MainActivity extends AppCompatActivity
                 }
             });
 
-            holder.footer.setText("Hours: " + name);
+            Calendar cal = Calendar.getInstance();
+            int currentHour = cal.get(Calendar.HOUR_OF_DAY);
+
+            for (String diningHall : diningHallNames) {
+                if (currentHour < 12) {
+                    for (int i = 0; i < breakfastOpeningHours.size(); i++) {
+                        int openHour = Integer.parseInt(breakfastOpeningHours.get(diningHall).toString().substring(0, 2));
+                        int closeHour = Integer.parseInt(breakfastClosingHours.get(diningHall).toString().substring(0, 2));
+                        if (currentHour > openHour && currentHour < closeHour) {
+                            holder.footer.setText("Open until " + closeHour + ":00 AM");
+                            holder.footer.setTextColor(Color.GREEN);
+                        }
+                        else if (currentHour < openHour) {
+                            holder.footer.setText("Opens at " + openHour + ":00 AM");
+                            holder.footer.setTextColor(Color.RED);
+                        }
+                    }
+                }
+                else if (currentHour >= 12 && currentHour < 17) {
+                    for (int i = 0; i < lunchOpeningHours.size(); i++) {
+                        int openHour = Integer.parseInt(lunchOpeningHours.get(diningHall).toString().substring(0, 2));
+                        int closeHour = Integer.parseInt(lunchClosingHours.get(diningHall).toString().substring(0, 2));
+                        if (currentHour > openHour && currentHour < closeHour) {
+                            holder.footer.setText("Open until " + closeHour);
+                            holder.footer.setTextColor(Color.GREEN);
+                        }
+                    }
+                }
+                else if (currentHour >= 17) {
+                    for (int i = 0; i < dinnerOpeningHours.size(); i++) {
+                        int openHour = Integer.parseInt(dinnerOpeningHours.get(diningHall).toString().substring(0, 2));
+                        int closeHour = Integer.parseInt(dinnerClosingHours.get(diningHall).toString().substring(0, 2));
+                        Log.e(diningHall, openHour + " to " + closeHour);
+                        if (currentHour > openHour && currentHour < closeHour) {
+                            holder.footer.setText("Open until " + closeHour + ":00 PM");
+                            holder.footer.setTextColor(Color.GREEN);
+                        }
+                        else {
+                            holder.footer.setText("Closed at " + closeHour + ":00 PM");
+                            holder.footer.setTextColor(Color.RED);
+                        }
+                    }
+                }
+            }
         }
 
         @Override
