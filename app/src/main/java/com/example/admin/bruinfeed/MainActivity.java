@@ -8,6 +8,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -412,7 +413,7 @@ public class MainActivity extends AppCompatActivity
                             holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
                         else
                             holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
-                        holder.footer.setTextColor(Color.GREEN);
+                        holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
                     }
                 } else {
                     holder.footer.setText("Closed for breakfast");
@@ -442,7 +443,7 @@ public class MainActivity extends AppCompatActivity
                             holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
                         else
                             holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
-                        holder.footer.setTextColor(Color.GREEN);
+                        holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
                     }
                 } else {
                     holder.footer.setText("Closed for lunch");
@@ -474,7 +475,7 @@ public class MainActivity extends AppCompatActivity
                             holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
                         else
                             holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
-                        holder.footer.setTextColor(Color.GREEN);
+                        holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
                     }
 
                     else if (currentHour >= closeHour24) {
