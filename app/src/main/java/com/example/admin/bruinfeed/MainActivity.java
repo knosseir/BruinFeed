@@ -7,7 +7,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -33,7 +32,6 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.sql.Time;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,7 +41,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -56,16 +53,18 @@ public class MainActivity extends AppCompatActivity
     private ArrayList<String> diningHallNames = new ArrayList<>();
     private Map<String, Integer> activityLevelMap = new HashMap<>();
 
-    private Map<String, Time> breakfastOpeningHours = new HashMap<>();
-    private Map<String, Time> breakfastClosingHours = new HashMap<>();
+    private Map<String, Calendar> breakfastOpeningHours = new HashMap<>();
+    private Map<String, Calendar> breakfastClosingHours = new HashMap<>();
 
-    private Map<String, Time> lunchOpeningHours = new HashMap<>();
-    private Map<String, Time> lunchClosingHours = new HashMap<>();
+    private Map<String, Calendar> lunchOpeningHours = new HashMap<>();
+    private Map<String, Calendar> lunchClosingHours = new HashMap<>();
 
-    private Map<String, Time> dinnerOpeningHours = new HashMap<>();
-    private Map<String, Time> dinnerClosingHours = new HashMap<>();
+    private Map<String, Calendar> dinnerOpeningHours = new HashMap<>();
+    private Map<String, Calendar> dinnerClosingHours = new HashMap<>();
 
     private SwipeRefreshLayout diningHallRefresh;
+
+    Calendar currentTime = Calendar.getInstance();
 
     private RecyclerView recyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -78,21 +77,13 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
+        toolbar.setTitleTextColor(Color.BLACK);
 
         recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new DiningHallAdapter(diningHallNames);
         recyclerView.setAdapter(mAdapter);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -103,10 +94,15 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        if (!isOnline()) {
+            reload(R.string.no_internet);
+            return;
+        }
+
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute(url);
 
-        diningHallRefresh.setColorSchemeColors(Color.rgb(244, 205, 65));
+        diningHallRefresh.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
 
         // refreshes dining hall grid upon pull to refresh
         diningHallRefresh.setRefreshing(true);
@@ -246,37 +242,39 @@ public class MainActivity extends AppCompatActivity
                         String meal = f.parent().className().replace("hours-open ", "");
                         String range = f.text();
 
-                        DateFormat format = new SimpleDateFormat("hh:mm a", Locale.US);
-                        int count = 0;
-
                         String[] s = range.split(" - ");
-                        Date date;
-                        Time openTime = new Time(00);
-                        Time closeTime = new Time(00);
-                        for (String j : s) {
-                            date = format.parse(j);
-                            if (count == 0)
-                                openTime = new Time(date.getTime());
-                            else if (count == 1)
-                                closeTime = new Time(date.getTime());
-                            count++;
-                        }
+                        Calendar openTime = Calendar.getInstance();
+                        Calendar closeTime = Calendar.getInstance();
+
+                        int year = currentTime.get(Calendar.YEAR);
+                        int month = currentTime.get(Calendar.MONTH);
+                        int day = currentTime.get(Calendar.DAY_OF_MONTH);
+
+                        DateFormat dateFormat = new SimpleDateFormat("hh:mm a");
+
+                        Date openDate = dateFormat.parse(s[0]), closeDate = dateFormat.parse(s[1]);
+
+                        int openHour = openDate.getHours(), closeHour = closeDate.getHours();
+                        int openMinute = openDate.getMinutes(), closeMinute = closeDate.getMinutes();
+
+                        openTime.set(year, month, day, openHour, openMinute);
+                        closeTime.set(year, month, day, closeHour, closeMinute);
 
                         switch (meal) {
                             case ("Breakfast"):
                                 breakfastOpeningHours.put(diningHall, openTime);
                                 breakfastClosingHours.put(diningHall, closeTime);
-                                // Log.e("Breakfast at " + diningHall, openTime + " to " + closeTime);
+                                Log.d("Breakfast at " + diningHall, openTime.get(Calendar.HOUR_OF_DAY) + ":" + openTime.get(Calendar.MINUTE) + " to " + closeTime.get(Calendar.HOUR_OF_DAY) + ":" + closeTime.get(Calendar.MINUTE));
                                 break;
                             case ("Lunch"):
                                 lunchOpeningHours.put(diningHall, openTime);
                                 lunchClosingHours.put(diningHall, closeTime);
-                                // Log.e("Lunch at " + diningHall, openTime + " to " + closeTime);
+                                Log.d("Lunch at " + diningHall, openTime.get(Calendar.HOUR_OF_DAY) + ":" + openTime.get(Calendar.MINUTE) + " to " + closeTime.get(Calendar.HOUR_OF_DAY) + ":" + closeTime.get(Calendar.MINUTE));
                                 break;
                             case ("Dinner"):
                                 dinnerOpeningHours.put(diningHall, openTime);
                                 dinnerClosingHours.put(diningHall, closeTime);
-                                // Log.e("Dinner at " + diningHall, openTime + " to " + closeTime);
+                                Log.d("Dinner at " + diningHall, openTime.get(Calendar.HOUR_OF_DAY) + ":" + openTime.get(Calendar.MINUTE) + " to " + closeTime.get(Calendar.HOUR_OF_DAY) + ":" + closeTime.get(Calendar.MINUTE));
                                 break;
                             default:
                                 return false;
@@ -284,9 +282,7 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
 
-            } catch (IOException e) {
-                Log.e(MainTag, e.toString());
-            } catch (ParseException e) {
+            } catch (IOException | ParseException e) {
                 Log.e(MainTag, e.toString());
             }
 
@@ -376,8 +372,8 @@ public class MainActivity extends AppCompatActivity
         public void onBindViewHolder(ViewHolder holder, final int position) {
             // - get element from dataset at this position
             // - replace the contents of the view with that element
-            final String name = values.get(position);
-            holder.header.setText(name);
+            final String diningHall = values.get(position);
+            holder.header.setText(diningHall);
             holder.header.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -392,47 +388,109 @@ public class MainActivity extends AppCompatActivity
             Calendar cal = Calendar.getInstance();
             int currentHour = cal.get(Calendar.HOUR_OF_DAY);
 
-            for (String diningHall : diningHallNames) {
-                if (currentHour < 12) {
-                    for (int i = 0; i < breakfastOpeningHours.size(); i++) {
-                        int openHour = Integer.parseInt(breakfastOpeningHours.get(diningHall).toString().substring(0, 2));
-                        int closeHour = Integer.parseInt(breakfastClosingHours.get(diningHall).toString().substring(0, 2));
-                        if (currentHour > openHour && currentHour < closeHour) {
-                            holder.footer.setText("Open until " + closeHour + ":00 AM");
-                            holder.footer.setTextColor(Color.GREEN);
-                        }
-                        else if (currentHour < openHour) {
-                            holder.footer.setText("Opens at " + openHour + ":00 AM");
-                            holder.footer.setTextColor(Color.RED);
-                        }
+            if (currentHour < 9) {
+                Calendar open = breakfastOpeningHours.get(diningHall), close = breakfastClosingHours.get(diningHall);
+
+                if (open != null && close != null) {
+                    int openHour24 = breakfastOpeningHours.get(diningHall).get(Calendar.HOUR_OF_DAY), closeHour24 = breakfastClosingHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
+                    int openHour = breakfastOpeningHours.get(diningHall).get(Calendar.HOUR), closeHour = breakfastClosingHours.get(diningHall).get(Calendar.HOUR);
+                    int openMinute = breakfastOpeningHours.get(diningHall).get(Calendar.MINUTE), closeMinute = breakfastClosingHours.get(diningHall).get(Calendar.MINUTE);
+                    int openPeriod = breakfastOpeningHours.get(diningHall).get(Calendar.AM_PM), closePeriod = breakfastClosingHours.get(diningHall).get(Calendar.AM_PM);
+
+                    String openPeriodString = (openPeriod == 0) ? "AM" : "PM", closedPeriodString = (closePeriod == 0) ? "AM" : "PM";
+
+                    if (currentHour < openHour24) {
+                        if (openMinute == 0)
+                            holder.footer.setText("Opening at " + openHour + " " + openPeriodString);
+                        else
+                            holder.footer.setText("Opening at " + openHour + ":" + openMinute + " " + openPeriodString);
+                        holder.footer.setTextColor(Color.RED);
                     }
+
+                    else if (currentHour >= openHour24 && currentHour < closeHour24) {
+                        if (closeMinute == 0)
+                            holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
+                        else
+                            holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
+                        holder.footer.setTextColor(Color.GREEN);
+                    }
+                } else {
+                    holder.footer.setText("Closed for breakfast");
+                    holder.footer.setTextColor(Color.RED);
                 }
-                else if (currentHour >= 12 && currentHour < 17) {
-                    for (int i = 0; i < lunchOpeningHours.size(); i++) {
-                        int openHour = Integer.parseInt(lunchOpeningHours.get(diningHall).toString().substring(0, 2));
-                        int closeHour = Integer.parseInt(lunchClosingHours.get(diningHall).toString().substring(0, 2));
-                        if (currentHour > openHour && currentHour < closeHour) {
-                            holder.footer.setText("Open until " + closeHour);
-                            holder.footer.setTextColor(Color.GREEN);
-                        }
+            } else if (currentHour < 14) {
+                Calendar open = lunchOpeningHours.get(diningHall), close = lunchClosingHours.get(diningHall);
+
+                if (open != null && close != null) {
+                    int openHour24 = lunchOpeningHours.get(diningHall).get(Calendar.HOUR_OF_DAY), closeHour24 = lunchClosingHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
+                    int openHour = lunchOpeningHours.get(diningHall).get(Calendar.HOUR), closeHour = lunchClosingHours.get(diningHall).get(Calendar.HOUR);
+                    int openMinute = lunchOpeningHours.get(diningHall).get(Calendar.MINUTE), closeMinute = lunchClosingHours.get(diningHall).get(Calendar.MINUTE);
+                    int openPeriod = lunchOpeningHours.get(diningHall).get(Calendar.AM_PM), closePeriod = lunchClosingHours.get(diningHall).get(Calendar.AM_PM);
+
+                    String openPeriodString = (openPeriod == 0) ? "AM" : "PM", closedPeriodString = (closePeriod == 0) ? "AM" : "PM";
+
+                    if (currentHour < openHour24) {
+                        if (openMinute == 0)
+                            holder.footer.setText("Opening at " + openHour + " " + openPeriodString);
+                        else
+                            holder.footer.setText("Opening at " + openHour + ":" + openMinute + " " + openPeriodString);
+                        holder.footer.setTextColor(Color.RED);
                     }
+
+                    else if (currentHour >= openHour24 && currentHour < closeHour24) {
+                        if (closeMinute == 0)
+                            holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
+                        else
+                            holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
+                        holder.footer.setTextColor(Color.GREEN);
+                    }
+                } else {
+                    holder.footer.setText("Closed for lunch");
+                    holder.footer.setTextColor(Color.RED);
                 }
-                else if (currentHour >= 17) {
-                    for (int i = 0; i < dinnerOpeningHours.size(); i++) {
-                        int openHour = Integer.parseInt(dinnerOpeningHours.get(diningHall).toString().substring(0, 2));
-                        int closeHour = Integer.parseInt(dinnerClosingHours.get(diningHall).toString().substring(0, 2));
-                        Log.e(diningHall, openHour + " to " + closeHour);
-                        if (currentHour > openHour && currentHour < closeHour) {
-                            holder.footer.setText("Open until " + closeHour + ":00 PM");
-                            holder.footer.setTextColor(Color.GREEN);
-                        }
-                        else {
-                            holder.footer.setText("Closed at " + closeHour + ":00 PM");
-                            holder.footer.setTextColor(Color.RED);
-                        }
+
+            } else {
+                Calendar open = dinnerOpeningHours.get(diningHall), close = dinnerClosingHours.get(diningHall);
+
+                if (open != null && close != null) {
+                    int openHour24 = dinnerOpeningHours.get(diningHall).get(Calendar.HOUR_OF_DAY), closeHour24 = dinnerClosingHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
+                    int openHour = dinnerOpeningHours.get(diningHall).get(Calendar.HOUR), closeHour = dinnerClosingHours.get(diningHall).get(Calendar.HOUR);
+                    int openMinute = dinnerOpeningHours.get(diningHall).get(Calendar.MINUTE), closeMinute = dinnerClosingHours.get(diningHall).get(Calendar.MINUTE);
+                    int openPeriod = dinnerOpeningHours.get(diningHall).get(Calendar.AM_PM), closePeriod = dinnerClosingHours.get(diningHall).get(Calendar.AM_PM);
+
+                    String openPeriodString = (openPeriod == 0) ? "AM" : "PM", closedPeriodString = (closePeriod == 0) ? "AM" : "PM";
+
+                    if (currentHour < openHour24) {
+                        // TODO: USE CALENDAR HH:MM PRINTOUT
+                        if (openMinute == 0)
+                            holder.footer.setText("Opening at " + openHour + " " + openPeriodString);
+                        else
+                            holder.footer.setText("Opening at " + openHour + ":" + openMinute + " " + openPeriodString);
+                        holder.footer.setTextColor(Color.RED);
                     }
+
+                    else if (currentHour >= openHour24 && currentHour < closeHour24) {
+                        if (closeMinute == 0)
+                            holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
+                        else
+                            holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
+                        holder.footer.setTextColor(Color.GREEN);
+                    }
+
+                    else if (currentHour >= closeHour24) {
+                        if (closeMinute == 0)
+                            holder.footer.setText("Closed at " + closeHour + " " + closedPeriodString);
+                        else
+                            holder.footer.setText("Closed at " + closeHour + ":" + closeMinute + " " + closedPeriodString);
+                        holder.footer.setTextColor(Color.RED);
+                    }
+
+                } else {
+                    holder.footer.setText("Closed for dinner");
+                    holder.footer.setTextColor(Color.RED);
                 }
             }
+
         }
 
         @Override

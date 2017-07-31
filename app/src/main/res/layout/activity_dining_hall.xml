@@ -29,7 +29,6 @@
 
             <ProgressBar
                 android:id="@+id/activityLevel"
-                android:theme="@style/LinearProgress"
                 android:layout_below="@id/activityLevelTextBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -37,6 +36,8 @@
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
+                android:progressTint="@color/BruinGold"
+                android:progressBackgroundTint="@color/colorPrimaryDark"
                 style="@android:style/Widget.ProgressBar.Horizontal" />
 
             <android.support.v7.widget.RecyclerView
