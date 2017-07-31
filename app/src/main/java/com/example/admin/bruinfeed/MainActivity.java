@@ -416,7 +416,7 @@ public class MainActivity extends AppCompatActivity
                         holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
                     }
                 } else {
-                    holder.footer.setText("Closed for breakfast");
+                    holder.footer.setText(R.string.breakfast_closed);
                     holder.footer.setTextColor(Color.RED);
                 }
             } else if (currentHour < 14) {
@@ -446,7 +446,7 @@ public class MainActivity extends AppCompatActivity
                         holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
                     }
                 } else {
-                    holder.footer.setText("Closed for lunch");
+                    holder.footer.setText(R.string.lunch_closed);
                     holder.footer.setTextColor(Color.RED);
                 }
 
@@ -487,7 +487,7 @@ public class MainActivity extends AppCompatActivity
                     }
 
                 } else {
-                    holder.footer.setText("Closed for dinner");
+                    holder.footer.setText(R.string.dinner_closed);
                     holder.footer.setTextColor(Color.RED);
                 }
             }

@@ -4,10 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="48dp"
     android:gravity="center_vertical"
-    android:paddingLeft="16dp"
-    android:singleLine="true"
+    android:paddingLeft="6dp"
+    android:maxLines="1"
     android:textAllCaps="true"
     android:background="@android:color/transparent"
-    android:textSize="16sp"
+    android:textSize="18sp"
     android:id="@+id/section_text"
     android:textStyle="bold" />

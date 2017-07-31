@@ -33,6 +33,8 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class DiningHallActivity extends AppCompatActivity {
 
@@ -41,7 +43,7 @@ public class DiningHallActivity extends AppCompatActivity {
     String url, meal;
     int activityLevel = 0;
     ArrayList<String> menuItemNames = new ArrayList<>();
-    TextView activityLeveLTextView;
+    TextView activityLevelTextView;
 
     String selectedDiningHall;
 
@@ -94,11 +96,11 @@ public class DiningHallActivity extends AppCompatActivity {
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new SimpleAdapter(getBaseContext(), menuItemNames);
-        recyclerView.addItemDecoration(new DividerItemDecoration(this,LinearLayoutManager.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
         menuRefresh = (SwipeRefreshLayout) findViewById(R.id.menuRefresh);
 
-        activityLeveLTextView = (TextView) findViewById(R.id.activityLevelTextBox);
+        activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
 
         // get current hour of day
         Calendar cal = Calendar.getInstance();
@@ -108,12 +110,10 @@ public class DiningHallActivity extends AppCompatActivity {
         if (currentHour > 6 && currentHour < 11) {
             navigation.setSelectedItemId(R.id.bottom_breakfast_button);
             meal = "Breakfast";
-        }
-        else if (currentHour < 17) {
+        } else if (currentHour < 17) {
             navigation.setSelectedItemId(R.id.bottom_lunch_button);
             meal = "Lunch";
-        }
-        else {
+        } else {
             navigation.setSelectedItemId(R.id.bottom_dinner_button);
             meal = "Dinner";
         }
@@ -151,40 +151,26 @@ public class DiningHallActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             try {
-                Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
-                Elements links = doc.select("a.recipeLink");
-                Elements menuSections = doc.select("li.sect-item");
+                Document doc = Jsoup.connect(url).timeout(10 * 1000).get();
+                Elements links = doc.select("a.recipeLink, li.sect-item");
                 menuItemNames.clear();
+                sections.clear();
 
                 for (Element link : links) {
-                    menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
+                    if (link.tagName().equals("a")) {
+                        menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
+                    } else if (link.tagName().equals("li")) {
+                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItemNames.size(), link.ownText()));
+                    }
                 }
 
-                int count = 0;
-                for (Element menuSection : menuSections) {
-                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(count += 2, menuSection.ownText()));
-                }
-
-                //Add your adapter to the sectionAdapter
+                // Add adapter to the sectionAdapter
                 SimpleSectionedRecyclerViewAdapter.Section[] dummy = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
                 mSectionedAdapter = new
-                        SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.firstLine, mAdapter);
+                        SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
                 mSectionedAdapter.setSections(sections.toArray(dummy));
 
                 updateMenuRecyclerView();
-
-                /*
-                if (menuItemNames.isEmpty()) {
-                    final Snackbar emptyMenuSnackbar = Snackbar.make(findViewById(R.id.menuGrid), R.string.empty_menu, Snackbar.LENGTH_INDEFINITE);
-                    emptyMenuSnackbar.setAction("OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            emptyMenuSnackbar.dismiss();
-                        }
-                    });
-                    emptyMenuSnackbar.show();
-                }
-                */
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e(DiningHallTag, e.toString());
@@ -198,6 +184,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
             return "success";
         }
+
     }
 
     public void updateMenuRecyclerView() {
@@ -207,12 +194,25 @@ public class DiningHallActivity extends AppCompatActivity {
             public void run() {
                 recyclerView.setAdapter(mSectionedAdapter);
                 mAdapter.notifyDataSetChanged();
+
+                /*
+                if (menuItemNames.isEmpty()) {
+                    final Snackbar emptyMenuSnackbar = Snackbar.make(findViewById(R.id.menuRecyclerView), R.string.empty_menu, Snackbar.LENGTH_INDEFINITE);
+                    emptyMenuSnackbar.setAction("OK", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            emptyMenuSnackbar.dismiss();
+                        }
+                    });
+                    emptyMenuSnackbar.show();
+                }
+                */
+
                 setTitle(meal + " at " + selectedDiningHall);
                 if (activityLevel == 0) {
-                    activityLeveLTextView.setText("Activity Level at " + selectedDiningHall + " is unavailable");
-                }
-                else {
-                    activityLeveLTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
+                    activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is unavailable");
+                } else {
+                    activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
                 }
                 activityLevelProgressBar.setProgress(activityLevel);
                 menuRefresh.setRefreshing(false);
@@ -223,13 +223,13 @@ public class DiningHallActivity extends AppCompatActivity {
     public void reload(int error) {
         Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.menuRecyclerView), error, Snackbar.LENGTH_INDEFINITE);
         reloadSnackbar.setAction(R.string.retry, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        menuRefresh.setRefreshing(true);
-                        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-                        asyncTaskRunner.execute(url);
-                    }
-                });
-                reloadSnackbar.show();
+            @Override
+            public void onClick(View v) {
+                menuRefresh.setRefreshing(true);
+                AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+                asyncTaskRunner.execute(url);
+            }
+        });
+        reloadSnackbar.show();
     }
 }
