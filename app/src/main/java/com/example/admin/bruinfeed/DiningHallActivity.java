@@ -9,6 +9,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -45,8 +46,10 @@ public class DiningHallActivity extends AppCompatActivity {
     String selectedDiningHall;
 
     private RecyclerView recyclerView;
-    private RecyclerView.Adapter mAdapter;
+    private SimpleAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    List<SimpleSectionedRecyclerViewAdapter.Section> sections = new ArrayList<>();
+    SimpleSectionedRecyclerViewAdapter mSectionedAdapter;
 
     private ProgressBar activityLevelProgressBar;
 
@@ -69,7 +72,6 @@ public class DiningHallActivity extends AppCompatActivity {
                     break;
             }
             url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
-            Log.e(DiningHallTag, url);
 
             menuRefresh.setRefreshing(true);
             DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
@@ -91,8 +93,8 @@ public class DiningHallActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.menuRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new MenuAdapter(menuItemNames);
-        recyclerView.setAdapter(mAdapter);
+        mAdapter = new SimpleAdapter(getBaseContext(), menuItemNames);
+        recyclerView.addItemDecoration(new DividerItemDecoration(this,LinearLayoutManager.VERTICAL));
 
         menuRefresh = (SwipeRefreshLayout) findViewById(R.id.menuRefresh);
 
@@ -151,11 +153,23 @@ public class DiningHallActivity extends AppCompatActivity {
             try {
                 Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
                 Elements links = doc.select("a.recipeLink");
+                Elements menuSections = doc.select("li.sect-item");
                 menuItemNames.clear();
 
                 for (Element link : links) {
                     menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
                 }
+
+                int count = 0;
+                for (Element menuSection : menuSections) {
+                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(count += 2, menuSection.ownText()));
+                }
+
+                //Add your adapter to the sectionAdapter
+                SimpleSectionedRecyclerViewAdapter.Section[] dummy = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
+                mSectionedAdapter = new
+                        SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.firstLine, mAdapter);
+                mSectionedAdapter.setSections(sections.toArray(dummy));
 
                 updateMenuRecyclerView();
 
@@ -191,6 +205,7 @@ public class DiningHallActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                recyclerView.setAdapter(mSectionedAdapter);
                 mAdapter.notifyDataSetChanged();
                 setTitle(meal + " at " + selectedDiningHall);
                 if (activityLevel == 0) {
@@ -216,72 +231,5 @@ public class DiningHallActivity extends AppCompatActivity {
                     }
                 });
                 reloadSnackbar.show();
-    }
-
-    public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
-        private List<String> values;
-
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            TextView header;
-            TextView footer;
-            View menuLayout;
-
-            public ViewHolder(View v) {
-                super(v);
-                menuLayout = v;
-                header = (TextView) v.findViewById(R.id.firstLine);
-                footer = (TextView) v.findViewById(R.id.secondLine);
-            }
-        }
-
-        public void add(int position, String item) {
-            values.add(position, item);
-            notifyItemInserted(position);
-        }
-
-        public void remove(int position) {
-            values.remove(position);
-            notifyItemRemoved(position);
-        }
-
-        public String getItemAtPosition(int position) {
-            return values.get(position);
-        }
-
-        public MenuAdapter(List<String> data) {
-            values = data;
-        }
-
-        @Override
-        public MenuAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            // create a new view
-            LayoutInflater inflater = LayoutInflater.from(
-                    parent.getContext());
-            View v = inflater.inflate(R.layout.menu_row, parent, false);
-            // set the view's size, margins, paddings and layout parameters
-            ViewHolder vh = new ViewHolder(v);
-            return vh;
-        }
-
-        @Override
-        public void onBindViewHolder(ViewHolder holder, final int position) {
-            // - get element from dataset at this position
-            // - replace the contents of the view with that element
-            final String name = values.get(position);
-            holder.header.setText(name);
-            holder.header.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                }
-            });
-
-            holder.footer.setText("Hours: " + name);
-        }
-
-        @Override
-        public int getItemCount() {
-            return values.size();
-        }
     }
 }

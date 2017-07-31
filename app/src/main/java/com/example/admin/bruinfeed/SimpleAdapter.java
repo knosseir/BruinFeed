@@ -2,6 +2,7 @@ package com.example.admin.bruinfeed;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +18,8 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
     private final Context mContext;
     private List<String> mData;
 
-    public void add(String s,int position) {
-        position = position == -1 ? getItemCount()  : position;
-        mData.add(position,s);
+    public void add(String s, int position) {
+        mData.add(position, s);
         notifyItemInserted(position);
     }
 
@@ -35,29 +35,32 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
         public SimpleViewHolder(View view) {
             super(view);
-            title = (TextView) view.findViewById(R.id.simple_text);
+            title = (TextView) view.findViewById(R.id.firstLine);
         }
     }
 
-    public SimpleAdapter(Context context, String[] data) {
+    public SimpleAdapter(Context context, ArrayList<String> data) {
         mContext = context;
-        if (data != null)
-            mData = new ArrayList<String>(Arrays.asList(data));
-        else mData = new ArrayList<String>();
+        mData = data;
     }
 
     public SimpleViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        final View view = LayoutInflater.from(mContext).inflate(R.layout.simple_item, parent, false);
+        final View view = LayoutInflater.from(mContext).inflate(R.layout.menu_row, parent, false);
         return new SimpleViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(SimpleViewHolder holder, final int position) {
-        holder.title.setText(mData.get(position));
+        // - get element from dataset at this position
+        // - replace the contents of the view with that element
+        if (mData.size() == 0) return;
+
+        final String name = mData.get(position);
+        holder.title.setText(name);
         holder.title.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Toast.makeText(mContext,"Position ="+position,Toast.LENGTH_SHORT).show();
+            public void onClick(View v) {
+
             }
         });
     }
