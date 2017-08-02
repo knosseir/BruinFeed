@@ -12,6 +12,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -375,7 +376,8 @@ public class MainActivity extends AppCompatActivity
             // - replace the contents of the view with that element
             final String diningHall = values.get(position);
             holder.header.setText(diningHall);
-            holder.header.setOnClickListener(new View.OnClickListener() {
+
+            View.OnClickListener diningHallListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Object obj = getItemAtPosition(position);
@@ -384,7 +386,10 @@ public class MainActivity extends AppCompatActivity
                     diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
                     startActivity(diningHallMenuIntent);
                 }
-            });
+            };
+
+            ((View)holder.header.getParent()).setOnClickListener(diningHallListener);
+            ((View)holder.footer.getParent()).setOnClickListener(diningHallListener);
 
             Calendar cal = Calendar.getInstance();
             int currentHour = cal.get(Calendar.HOUR_OF_DAY);
@@ -419,7 +424,7 @@ public class MainActivity extends AppCompatActivity
                     holder.footer.setText(R.string.breakfast_closed);
                     holder.footer.setTextColor(Color.RED);
                 }
-            } else if (currentHour < 14) {
+            } else if (currentHour < 17) {
                 Calendar open = lunchOpeningHours.get(diningHall), close = lunchClosingHours.get(diningHall);
 
                 if (open != null && close != null) {

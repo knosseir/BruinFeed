@@ -76,7 +76,7 @@ public class DiningHallActivity extends AppCompatActivity {
             url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
 
             menuRefresh.setRefreshing(true);
-            DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
+            AsyncTaskRunner runner = new AsyncTaskRunner();
             runner.execute(url);
 
             return true;
@@ -107,7 +107,7 @@ public class DiningHallActivity extends AppCompatActivity {
         int currentHour = cal.get(Calendar.HOUR_OF_DAY);
 
         // pick default meal based on time of day
-        if (currentHour > 6 && currentHour < 11) {
+        if (currentHour < 11) {
             navigation.setSelectedItemId(R.id.bottom_breakfast_button);
             meal = "Breakfast";
         } else if (currentHour < 17) {
@@ -127,12 +127,9 @@ public class DiningHallActivity extends AppCompatActivity {
         url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
         setTitle(meal + " at " + selectedDiningHall);
 
-        menuRefresh.setRefreshing(true);
-
-        DiningHallActivity.AsyncTaskRunner runner = new DiningHallActivity.AsyncTaskRunner();
-        runner.execute(url);
-
         menuRefresh.setColorSchemeColors(Color.rgb(244, 205, 65));
+
+        menuRefresh.setRefreshing(true);
 
         // refreshes menu upon pull to refresh
         menuRefresh.setOnRefreshListener(
@@ -184,7 +181,6 @@ public class DiningHallActivity extends AppCompatActivity {
 
             return "success";
         }
-
     }
 
     public void updateMenuRecyclerView() {
@@ -210,7 +206,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
                 setTitle(meal + " at " + selectedDiningHall);
                 if (activityLevel == 0) {
-                    activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is unavailable");
+                    activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
                 } else {
                     activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
                 }

@@ -55,14 +55,16 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         // - replace the contents of the view with that element
         if (mData.size() == 0) return;
 
-        final String name = mData.get(position);
-        holder.title.setText(name);
-        holder.title.setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener menuItemOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
             }
-        });
+        };
+
+        final String name = mData.get(position);
+        holder.title.setText(name);
+        ((View)holder.title.getParent()).setOnClickListener(menuItemOnClickListener);
     }
 
     @Override
