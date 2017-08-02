@@ -1,9 +1,9 @@
 package com.example.admin.bruinfeed;
 
-public class MenuItem {
+public class MealItem {
     private String mName, mDescription, mUrl;
 
-    public MenuItem(String name, String description, String url) {
+    public MealItem(String name, String description, String url) {
         mName = name;
         mDescription = description;
         mUrl = url;

@@ -30,6 +30,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.admin.bruinfeed.MainActivity" />
         </activity>
+        <activity
+            android:name=".MealItemActivity"
+            android:label="@string/title_activity_meal_item"
+            android:parentActivityName=".DiningHallActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.admin.bruinfeed.DiningHallActivity" />
+        </activity>
     </application>
 
 </manifest>

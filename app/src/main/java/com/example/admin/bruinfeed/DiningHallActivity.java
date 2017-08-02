@@ -42,7 +42,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
     String url, meal;
     int activityLevel = 0;
-    ArrayList<String> menuItemNames = new ArrayList<>();
+    ArrayList<MealItem> menuItems = new ArrayList<>();
     TextView activityLevelTextView;
 
     String selectedDiningHall;
@@ -95,7 +95,7 @@ public class DiningHallActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.menuRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new SimpleAdapter(getBaseContext(), menuItemNames);
+        mAdapter = new SimpleAdapter(getBaseContext(), menuItems);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
         menuRefresh = (SwipeRefreshLayout) findViewById(R.id.menuRefresh);
@@ -150,14 +150,26 @@ public class DiningHallActivity extends AppCompatActivity {
             try {
                 Document doc = Jsoup.connect(url).timeout(10 * 1000).get();
                 Elements links = doc.select("a.recipeLink, li.sect-item");
-                menuItemNames.clear();
+                menuItems.clear();
                 sections.clear();
 
                 for (Element link : links) {
                     if (link.tagName().equals("a")) {
-                        menuItemNames.add(link.ownText());      // TODO: CHECK THAT LINK HAS TEXT USING HASTEXT()
+                        String description = null;
+                        Element parent = link.parent().parent();
+                        if (parent != null) {
+                            Elements descriptionElement = parent.select("div.tt-description");
+                            String url = link.attr("href");
+                            if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
+                                description = parent.select("div.tt-description").text();
+                                menuItems.add(new MealItem(link.ownText(), description, url));
+                            }
+                            else {
+                                menuItems.add(new MealItem(link.ownText(), "No description available", url));
+                            }
+                        }
                     } else if (link.tagName().equals("li")) {
-                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItemNames.size(), link.ownText()));
+                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size(), link.ownText()));
                     }
                 }
 
