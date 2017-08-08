@@ -91,8 +91,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             do {
                 MealItem mealItem = new MealItem();
-                mealItem.setName(cursor.getString(1));      // TODO: WHY ARE THESE REVERSED?
-                mealItem.setDescription(cursor.getString(0));
+                mealItem.setName(cursor.getString(0));      // TODO: WHY ARE THESE REVERSED?
+                mealItem.setDescription(cursor.getString(1));
                 mealItem.setUrl(cursor.getString(2));
 
                 // Add mealItem to list

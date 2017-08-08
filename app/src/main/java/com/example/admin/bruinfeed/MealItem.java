@@ -1,8 +1,9 @@
 package com.example.admin.bruinfeed;
 
-import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class MealItem {
+public class MealItem implements Parcelable {
     private String mName, mDescription, mUrl;
 
     public MealItem() {
@@ -23,9 +24,37 @@ public class MealItem {
         mUrl = url;
     }
 
-    public static MealItem getMealItem(Cursor cursor) {
-        return new MealItem(cursor.getString(0), cursor.getString(1), cursor.getString(2));
+    public MealItem(Parcel in) {
+        readFromParcel(in);
     }
+
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mName);
+        dest.writeString(mDescription);
+        dest.writeString(mUrl);
+    }
+
+    public int describeContents() {
+        return 0;
+    }
+
+    private void readFromParcel(Parcel in) {
+        mName = in.readString();
+        mDescription = in.readString();
+        mUrl = in.readString();
+    }
+
+    public static final Parcelable.Creator CREATOR =
+            new Parcelable.Creator() {
+                public MealItem createFromParcel(Parcel in) {
+                    return new MealItem(in);
+                }
+
+                public MealItem[] newArray(int size) {
+                    return new MealItem[size];
+                }
+            };
+
 
     public String getName() { return mName; }
 
