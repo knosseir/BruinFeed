@@ -165,6 +165,9 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_dinner) {
 
+        } else if (id == R.id.nav_favorites) {
+            Intent favoritesIntent = new Intent(getBaseContext(), FavoritesActivity.class);
+            startActivity(favoritesIntent);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

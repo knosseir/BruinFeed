@@ -19,6 +19,7 @@ import java.io.IOException;
 public class MealItemActivity extends AppCompatActivity {
 
     String name, description, url;
+    MealItem test;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,18 +47,22 @@ public class MealItemActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_favorite:
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
-                Log.e("favorite", "Favorite");
+                addFavorite(new MealItem(name, description, url));
                 return true;
 
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
-
         }
     }
+
+
+    public void addFavorite(MealItem mealItem) {
+        DatabaseHandler db = new DatabaseHandler(this);
+        db.addMealItem(mealItem);
+    }
+
 
     private class AsyncTaskRunner extends AsyncTask<String, String, String> {
         @Override
@@ -73,9 +78,7 @@ public class MealItemActivity extends AppCompatActivity {
                     nutritionFactsHtml = nutritionFactElements.get(0).toString();
                 }
 
-            }
-
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.e("error", e.toString()); // TODO: MAKE MEALITEMACTIVITY TAG
             }
             return nutritionFactsHtml;
@@ -84,7 +87,12 @@ public class MealItemActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s) {
             TextView nutritionFacts = (TextView) findViewById(R.id.nutrition_facts);
-            nutritionFacts.setText(Html.fromHtml(s, Html.FROM_HTML_MODE_COMPACT));
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                nutritionFacts.setText(Html.fromHtml(s, Html.FROM_HTML_MODE_COMPACT));
+            } else {
+                nutritionFacts.setText(Html.fromHtml(s));
+            }
         }
     }
 }

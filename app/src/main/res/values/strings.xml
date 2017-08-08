@@ -7,12 +7,14 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_dining_hall">DiningHallActivity</string>
     <string name="title_activity_meal_item">MealItemActivity</string>
+    <string name="title_activity_favorites">FavoritesActivity</string>
     <string name="title_breakfast">Breakfast</string>
     <string name="title_lunch">Lunch</string>
     <string name="title_dinner">Dinner</string>
     <string name="retry_connection">An error occurred. Please try again.</string>
     <string name="retry">Retry</string>
     <string name="no_internet">Your device is offline.</string>
+    <string name="no_description">No description available</string>
     <string name="connection_timeout">Your connection timed out.</string>
 
     <string name="empty_menu">The selected menu is empty.</string>

@@ -159,7 +159,7 @@ public class DiningHallActivity extends AppCompatActivity {
                                 menuItems.add(new MealItem(link.ownText(), description, url));
                             }
                             else {
-                                menuItems.add(new MealItem(link.ownText(), "No description available", url));
+                                menuItems.add(new MealItem(link.ownText(), url));
                             }
                         }
                     } else if (link.tagName().equals("li")) {

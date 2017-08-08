@@ -19,6 +19,7 @@
     <item android:title="Plan">
         <menu>
             <item
+                android:id="@+id/nav_favorites"
                 android:icon="@drawable/ic_star_border_black_24dp"
                 android:title="Favorites" />
             <item

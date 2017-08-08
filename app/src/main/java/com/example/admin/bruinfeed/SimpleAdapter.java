@@ -8,16 +8,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
 
     private final Context mContext;
     private List<MealItem> mData;
+    private int mLayout;
 
     /*
     public void add(String s, int position) {
@@ -42,16 +40,35 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             title = (TextView) view.findViewById(R.id.firstLine);
             description = (TextView) view.findViewById(R.id.secondLine);
         }
+
+        public SimpleViewHolder(View view, int titleId, int descriptionId) {
+            super(view);
+            title = (TextView) view.findViewById(titleId);
+            description = (TextView) view.findViewById(descriptionId);
+        }
     }
 
-    public SimpleAdapter(Context context, ArrayList<MealItem> data) {
+    public SimpleAdapter(Context context, List<MealItem> data) {
         mContext = context;
         mData = data;
+        mLayout = 0;
+    }
+
+    public SimpleAdapter(Context context, List<MealItem> data, int layoutId) {
+        mContext = context;
+        mData = data;
+        mLayout = layoutId;
     }
 
     public SimpleViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        final View view = LayoutInflater.from(mContext).inflate(R.layout.menu_row, parent, false);
-        return new SimpleViewHolder(view);
+        if (mLayout == 0) {
+            final View view = LayoutInflater.from(mContext).inflate(R.layout.menu_row, parent, false);
+            return new SimpleViewHolder(view);
+        }
+        else {
+            final View view = LayoutInflater.from(mContext).inflate(mLayout, parent, false);
+            return new SimpleViewHolder(view, R.id.favorites_name, R.id.favorites_description);
+        }
     }
 
     @Override
@@ -74,6 +91,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                 mealItemIntent.putExtra("Name", name);
                 mealItemIntent.putExtra("Description", description);
                 mealItemIntent.putExtra("url", url);
+
                 mContext.startActivity(mealItemIntent);
             }
         };
