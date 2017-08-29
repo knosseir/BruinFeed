@@ -3,6 +3,7 @@ package com.example.admin.bruinfeed;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.IntegerRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
@@ -29,6 +30,9 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class DiningHallActivity extends AppCompatActivity {
 
@@ -50,6 +54,8 @@ public class DiningHallActivity extends AppCompatActivity {
     private ProgressBar activityLevelProgressBar;
 
     SwipeRefreshLayout menuRefresh;
+
+    DatabaseHandler db;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -96,6 +102,8 @@ public class DiningHallActivity extends AppCompatActivity {
 
         activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
 
+        // db = new DatabaseHandler(this, "allMeals");
+
         // get current hour of day
         Calendar cal = Calendar.getInstance();
         int currentHour = cal.get(Calendar.HOUR_OF_DAY);
@@ -125,6 +133,9 @@ public class DiningHallActivity extends AppCompatActivity {
 
         menuRefresh.setRefreshing(true);
 
+        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
+        asyncTaskRunner.execute(url);
+
         // refreshes menu upon pull to refresh
         menuRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
@@ -137,55 +148,69 @@ public class DiningHallActivity extends AppCompatActivity {
         );
     }
 
-    private class AsyncTaskRunner extends AsyncTask<String, String, String> {
+    private class AsyncTaskRunner extends AsyncTask<String, String, Boolean> {
 
         @Override
-        protected String doInBackground(String... params) {
+        protected Boolean doInBackground(String... params) {
             try {
-                Document doc = Jsoup.connect(url).timeout(10 * 1000).get();
+                Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
                 Elements links = doc.select("a.recipeLink, li.sect-item");
                 menuItems.clear();
                 sections.clear();
 
+                String section = "";
+
                 for (Element link : links) {
                     if (link.tagName().equals("a")) {
-                        String description = null;
+                        String description;
                         Element parent = link.parent().parent();
                         if (parent != null) {
                             Elements descriptionElement = parent.select("div.tt-description");
                             String url = link.attr("href");
                             if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
                                 description = parent.select("div.tt-description").text();
-                                menuItems.add(new MealItem(link.ownText(), description, url));
-                            }
-                            else {
-                                menuItems.add(new MealItem(link.ownText(), url));
+                                menuItems.add(new MealItem(link.ownText(), description, url, selectedDiningHall, meal, section));
+                            } else {
+                                menuItems.add(new MealItem(link.ownText(), "No description available", url, selectedDiningHall, meal, section));
                             }
                         }
                     } else if (link.tagName().equals("li")) {
-                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size(), link.ownText()));
+                        section = link.ownText();
+                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size(), section));
                     }
                 }
 
                 // Add adapter to the sectionAdapter
-                SimpleSectionedRecyclerViewAdapter.Section[] dummy = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
-                mSectionedAdapter = new
-                        SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
-                mSectionedAdapter.setSections(sections.toArray(dummy));
-
-                updateMenuRecyclerView();
+                SimpleSectionedRecyclerViewAdapter.Section[] array = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
+                mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
+                mSectionedAdapter.setSections(sections.toArray(array));
 
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e(DiningHallTag, e.toString());
                 updateMenuRecyclerView();
                 reload(R.string.connection_timeout);
+                return false;
             } catch (IOException | IllegalArgumentException e) {
                 Log.e(DiningHallTag, e.toString());
                 updateMenuRecyclerView();
                 reload(R.string.retry_connection);
+                return false;
             }
 
-            return "success";
+            if (menuItems.size() > 0)
+                return true;
+            return false;
+        }
+
+        protected void onPostExecute(Boolean result) {
+//            if (result)
+//                updateMenuRecyclerView();
+//            else {
+//                menuRefresh.setRefreshing(false);
+//                reload(R.string.no_items_loaded);
+//            }
+            updateMenuRecyclerView();
+
         }
     }
 

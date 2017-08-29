@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
 
+    private DatabaseHandler db = new DatabaseHandler(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,7 +81,6 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
-        toolbar.setTitleTextColor(Color.BLACK);
 
         recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
@@ -89,8 +90,7 @@ public class MainActivity extends AppCompatActivity
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -202,6 +202,10 @@ public class MainActivity extends AppCompatActivity
 
                 updateRecyclerView();
 
+                for (String diningHall : diningHallNames) {
+                    getMeals(diningHall);
+                }
+
             } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
                 Log.e(MainTag, e.toString());
                 updateRecyclerView();
@@ -213,6 +217,48 @@ public class MainActivity extends AppCompatActivity
             }
 
             return "success";
+        }
+
+        public boolean getMeals(String diningHall) {
+            try {
+                String[] meals = { "Breakfast", "Lunch", "Dinner" };
+
+                for (String meal : meals) {
+                    Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall + "/" + meal).timeout(10 * 1000).get();
+                    Elements links = doc.select("a.recipeLink, li.sect-item");
+
+                    String section = "";
+
+                    for (Element link : links) {
+                        if (link.tagName().equals("a")) {
+                            String description;
+                            Element parent = link.parent().parent();
+                            if (parent != null) {
+                                Elements descriptionElement = parent.select("div.tt-description");
+                                String mealUrl = link.attr("href");
+                                if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
+                                    description = parent.select("div.tt-description").text();
+                                    db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section));
+                                } else {
+                                    db.addMealItem(new MealItem(link.ownText(), "No description available", mealUrl, diningHall, meal, section));
+                                }
+                            }
+                        } else if (link.tagName().equals("li")) {
+                            section = link.ownText();
+                        }
+                    }
+                }
+
+            } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
+                Log.e(MainTag, e.toString());
+                reload(R.string.connection_timeout);
+                return false;
+            } catch (IOException | IllegalArgumentException e) {
+                Log.e(MainTag, e.toString());
+                reload(R.string.retry_connection);
+                return false;
+            }
+            return true;
         }
 
         public boolean getActivityLevels(Document doc) {
@@ -391,8 +437,8 @@ public class MainActivity extends AppCompatActivity
                 }
             };
 
-            ((View)holder.header.getParent()).setOnClickListener(diningHallListener);
-            ((View)holder.footer.getParent()).setOnClickListener(diningHallListener);
+            ((View) holder.header.getParent()).setOnClickListener(diningHallListener);
+            ((View) holder.footer.getParent()).setOnClickListener(diningHallListener);
 
             Calendar cal = Calendar.getInstance();
             int currentHour = cal.get(Calendar.HOUR_OF_DAY);
@@ -414,9 +460,7 @@ public class MainActivity extends AppCompatActivity
                         else
                             holder.footer.setText("Opening at " + openHour + ":" + openMinute + " " + openPeriodString);
                         holder.footer.setTextColor(Color.RED);
-                    }
-
-                    else if (currentHour >= openHour24 && currentHour < closeHour24) {
+                    } else if (currentHour >= openHour24 && currentHour < closeHour24) {
                         if (closeMinute == 0)
                             holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
                         else
@@ -444,9 +488,7 @@ public class MainActivity extends AppCompatActivity
                         else
                             holder.footer.setText("Opening at " + openHour + ":" + openMinute + " " + openPeriodString);
                         holder.footer.setTextColor(Color.RED);
-                    }
-
-                    else if (currentHour >= openHour24 && currentHour < closeHour24) {
+                    } else if (currentHour >= openHour24 && currentHour < closeHour24) {
                         if (closeMinute == 0)
                             holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
                         else
@@ -476,17 +518,13 @@ public class MainActivity extends AppCompatActivity
                         else
                             holder.footer.setText("Opening at " + openHour + ":" + openMinute + " " + openPeriodString);
                         holder.footer.setTextColor(Color.RED);
-                    }
-
-                    else if (currentHour >= openHour24 && currentHour < closeHour24) {
+                    } else if (currentHour >= openHour24 && currentHour < closeHour24) {
                         if (closeMinute == 0)
                             holder.footer.setText("Open until " + closeHour + " " + closedPeriodString);
                         else
                             holder.footer.setText("Open until " + closeHour + ":" + closeMinute + " " + closedPeriodString);
                         holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
-                    }
-
-                    else if (currentHour >= closeHour24) {
+                    } else if (currentHour >= closeHour24) {
                         if (closeMinute == 0)
                             holder.footer.setText("Closed at " + closeHour + " " + closedPeriodString);
                         else

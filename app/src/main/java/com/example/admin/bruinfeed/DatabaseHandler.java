@@ -8,23 +8,25 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DatabaseHandler extends SQLiteOpenHelper {
 
-    // All Static variables
-    // Database Version
     private static final int DATABASE_VERSION = 1;
 
     // Database Name
-    private static final String DATABASE_NAME = "mealItemManager";
+    private static String DATABASE_NAME = "mealItemManager";
 
     // MealItems table name
-    private static final String TABLE_MEAL_ITEMS = "mealItems";
+    private static final String TABLE_MEAL_ITEMS= "mealItems";
 
     // MealItems Table Columns names
     private static final String KEY_NAME = "name";
     private static final String KEY_DESCRIPTION = "description";
     private static final String KEY_URL = "url";
+    private static final String KEY_HALL = "hall";
+    private static final String KEY_MEAL = "meal";
+    private static final String KEY_SECTION = "section";
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -35,7 +37,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATE_MEAL_ITEMS_TABLE = "CREATE TABLE " + TABLE_MEAL_ITEMS + "("
                 + KEY_NAME + " TEXT," + KEY_DESCRIPTION + " TEXT,"
-                + KEY_URL + " TEXT" + ")";
+                + KEY_URL + " TEXT," + KEY_HALL + " TEXT," + KEY_MEAL
+                + " TEXT," + KEY_SECTION + " TEXT" + ")";
         db.execSQL(CREATE_MEAL_ITEMS_TABLE);
     }
 
@@ -57,6 +60,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_NAME, mealItem.getName());
         values.put(KEY_DESCRIPTION, mealItem.getDescription());
         values.put(KEY_URL, mealItem.getUrl());
+        values.put(KEY_HALL, mealItem.getHall());
+        values.put(KEY_MEAL, mealItem.getMeal());
+        values.put(KEY_SECTION, mealItem.getSection());
 
         // Insert Row
         db.insert(TABLE_MEAL_ITEMS, null, values);
@@ -64,25 +70,22 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     }
 
     // Get single MealItem
-    MealItem getMealItem(int id) {
+    MealItem getMealItem(String name) {
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.query(TABLE_MEAL_ITEMS, new String[]{KEY_NAME,
-                        KEY_DESCRIPTION, KEY_URL}, KEY_NAME + "=?",
-                new String[]{String.valueOf(id)}, null, null, null, null);
+        Cursor cursor = db.query(TABLE_MEAL_ITEMS, null, KEY_NAME + " = ?",
+                new String[] { name }, null, null, null, null);
         if (cursor != null)
             cursor.moveToFirst();
 
-        cursor.close();
-
-        return new MealItem(cursor.getString(0), cursor.getString(1), cursor.getString(2));
+        return new MealItem(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
     }
 
     // Getting All MealItems
     List<MealItem> getAllMealItems() {
         List<MealItem> mealItemList = new ArrayList<>();
         // Select All Query
-        String selectQuery = "SELECT  * FROM " + TABLE_MEAL_ITEMS;
+        String selectQuery = "SELECT * FROM " + TABLE_MEAL_ITEMS;
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -91,9 +94,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             do {
                 MealItem mealItem = new MealItem();
-                mealItem.setName(cursor.getString(0));      // TODO: WHY ARE THESE REVERSED?
+                mealItem.setName(cursor.getString(0));
                 mealItem.setDescription(cursor.getString(1));
                 mealItem.setUrl(cursor.getString(2));
+                mealItem.setHall(cursor.getString(3));
+                mealItem.setMeal(cursor.getString(4));
+                mealItem.setSection(cursor.getString(5));
 
                 // Add mealItem to list
                 mealItemList.add(mealItem);
@@ -105,7 +111,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return mealItemList;
     }
 
-    // Update a single contact
+    // Update a single mealItem
     public int updateMealItem(MealItem mealItem) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -113,13 +119,16 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_NAME, mealItem.getName());
         values.put(KEY_DESCRIPTION, mealItem.getDescription());
         values.put(KEY_URL, mealItem.getUrl());
+        values.put(KEY_HALL, mealItem.getHall());
+        values.put(KEY_MEAL, mealItem.getMeal());
+        values.put(KEY_SECTION, mealItem.getSection());
 
         // updating row
-        return db.update(TABLE_MEAL_ITEMS, values, KEY_NAME,
+        return db.update(TABLE_MEAL_ITEMS, values, KEY_NAME + " = ?",
                 new String[]{mealItem.getName()});
     }
 
-    // Delete a single contact
+    // Delete a single mealItem
     public void deleteMealItem(String name) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_MEAL_ITEMS, KEY_NAME + " = ?",

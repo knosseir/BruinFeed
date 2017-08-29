@@ -16,8 +16,10 @@
     <string name="no_internet">Your device is offline.</string>
     <string name="no_description">No description available</string>
     <string name="connection_timeout">Your connection timed out.</string>
+    <string name="no_items_loaded">No items were loaded. Please try again.</string>
 
     <string name="empty_menu">The selected menu is empty.</string>
+    <string name="empty_favorites">Your favorites list is empty.</string>
 
     <string name="breakfast_closed">Closed for breakfast</string>
     <string name="lunch_closed">Closed for lunch</string>
