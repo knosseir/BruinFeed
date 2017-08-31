@@ -203,19 +203,19 @@ public class MainActivity extends AppCompatActivity
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
 
-                getActivityLevels(doc);
-
-                getHours();
-
-                Log.e("master item list size", db.getAllMealItems().size() + "");
-
-                updateRecyclerView();
-
                 for (String diningHall : diningHallNames) {
                     getMeals(diningHall);
                 }
 
-            } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
+                getHours();
+
+                getActivityLevels(doc);
+
+                updateRecyclerView();
+
+                Log.e("master item list size", db.getAllMealItems().size() + "");
+
+            } catch (SocketTimeoutException e) {
                 Log.e(MainTag, e.toString());
                 updateRecyclerView();
                 reload(R.string.connection_timeout);
