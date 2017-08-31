@@ -158,19 +158,29 @@ public class DiningHallActivity extends AppCompatActivity {
 
                 String section = "";
 
+                // TODO: RETRIEVE ITEMS FROM DATABASE INSTEAD OF FROM ONLINE
                 for (Element link : links) {
                     if (link.tagName().equals("a")) {
                         String description;
+                        ArrayList<String> descriptors = new ArrayList<>();
                         Element parent = link.parent().parent();
                         if (parent != null) {
                             Elements descriptionElement = parent.select("div.tt-description");
+                            Elements descriptorElement = parent.select("div.tt-prodwebcode");
                             String url = link.attr("href");
                             if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
-                                description = parent.select("div.tt-description").text();
-                                menuItems.add(new MealItem(link.ownText(), description, url, selectedDiningHall, meal, section));
+                                description = descriptionElement.text();
                             } else {
-                                menuItems.add(new MealItem(link.ownText(), "No description available", url, selectedDiningHall, meal, section));
+                                description = "No description available";
                             }
+
+                            if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
+                                for (Element e : descriptorElement) {
+                                    descriptors.add(e.ownText());
+                                }
+                            }
+                            Log.e("descriptors size", descriptors.size() + "");
+                            menuItems.add(new MealItem(link.ownText(), description, url, selectedDiningHall, meal, section, descriptors));
                         }
                     } else if (link.tagName().equals("li")) {
                         section = link.ownText();
@@ -183,7 +193,7 @@ public class DiningHallActivity extends AppCompatActivity {
                 mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
                 mSectionedAdapter.setSections(sections.toArray(array));
 
-            } catch (SocketTimeoutException e) {    // TODO: CHECK NUMBER OF EXCEPTIONS OCCURRED
+            } catch (SocketTimeoutException e) {
                 Log.e(DiningHallTag, e.toString());
                 updateMenuRecyclerView();
                 reload(R.string.connection_timeout);

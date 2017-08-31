@@ -213,16 +213,16 @@ public class MainActivity extends AppCompatActivity
 
                 updateRecyclerView();
 
-                Log.e("master item list size", db.getAllMealItems().size() + "");
-
             } catch (SocketTimeoutException e) {
                 Log.e(MainTag, e.toString());
                 updateRecyclerView();
                 reload(R.string.connection_timeout);
+                return "error";
             } catch (IOException | IllegalArgumentException e) {
                 Log.e(MainTag, e.toString());
                 updateRecyclerView();
                 reload(R.string.retry_connection);
+                return "error";
             }
 
             return "success";

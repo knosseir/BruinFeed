@@ -26,7 +26,7 @@ public class MealPeriodActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_meal_period);
         selectedMeal = getIntent().getStringExtra("selectedMeal");
-        setTitle(selectedMeal);
+        setTitle(selectedMeal);     // TODO: DESCRIPTORS DON'T APPEAR BECAUSE MAINACTIVITY DOES NOT HAVE ARRAYLIST OF DESCRIPTORS TO PASS THROUGH INTENT
 
         recyclerView = (RecyclerView) findViewById(R.id.mealListRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);

@@ -14,4 +14,10 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/nutrition_facts"/>
 
+    <TextView
+        android:id="@+id/descriptor_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/found_at_list"/>
+
 </RelativeLayout>

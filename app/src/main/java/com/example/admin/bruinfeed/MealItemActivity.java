@@ -28,7 +28,10 @@ import java.util.List;
 
 public class MealItemActivity extends AppCompatActivity {
 
+    private static final String MealItemTag = "MealItemActivity";
+
     String name, description, url, hall, meal, section;
+    ArrayList<String> descriptors;
     boolean favorite;
     MealItem selectedItem;
     DatabaseHandler db;
@@ -52,6 +55,7 @@ public class MealItemActivity extends AppCompatActivity {
         hall = selectedItem.getHall();
         meal = selectedItem.getMeal();
         section = selectedItem.getSection();
+        descriptors = selectedItem.getDescriptors();
 
         favSettings = getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
         editor = favSettings.edit();
@@ -76,6 +80,15 @@ public class MealItemActivity extends AppCompatActivity {
         }
         foundAt.setText(foundAtText);
 
+        String descriptorText = "More information about " + name + ":" + '\n';
+
+        TextView descriptorList = (TextView) findViewById(R.id.descriptor_list);
+
+        for (String s : descriptors) {
+            descriptorText += s + '\n';
+        }
+
+        descriptorList.setText(descriptorText);
 
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute(url);
@@ -150,7 +163,7 @@ public class MealItemActivity extends AppCompatActivity {
                 }
 
             } catch (IOException e) {
-                Log.e("error", e.toString()); // TODO: MAKE MEALITEMACTIVITY TAG
+                Log.e(MealItemTag, e.toString());
             }
             return nutritionFactsHtml;
         }
