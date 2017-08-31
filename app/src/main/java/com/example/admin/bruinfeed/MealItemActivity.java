@@ -30,8 +30,7 @@ public class MealItemActivity extends AppCompatActivity {
 
     private static final String MealItemTag = "MealItemActivity";
 
-    String name, description, url, hall, meal, section;
-    ArrayList<String> descriptors;
+    String name, description, url, hall, meal, section, descriptors;
     boolean favorite;
     MealItem selectedItem;
     DatabaseHandler db;
@@ -80,13 +79,9 @@ public class MealItemActivity extends AppCompatActivity {
         }
         foundAt.setText(foundAtText);
 
-        String descriptorText = "More information about " + name + ":" + '\n';
+        String descriptorText = "More information about " + name + ":" + '\n' + descriptors;
 
         TextView descriptorList = (TextView) findViewById(R.id.descriptor_list);
-
-        for (String s : descriptors) {
-            descriptorText += s + '\n';
-        }
 
         descriptorList.setText(descriptorText);
 

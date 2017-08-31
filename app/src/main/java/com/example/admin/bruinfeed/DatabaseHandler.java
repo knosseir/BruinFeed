@@ -27,6 +27,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_HALL = "hall";
     private static final String KEY_MEAL = "meal";
     private static final String KEY_SECTION = "section";
+    private static final String KEY_DESCRIPTORS = "descriptors";
 
 
     public DatabaseHandler(Context context) {
@@ -39,7 +40,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         String CREATE_MEAL_ITEMS_TABLE = "CREATE TABLE " + TABLE_MEAL_ITEMS + "("
                 + KEY_NAME + " TEXT," + KEY_DESCRIPTION + " TEXT,"
                 + KEY_URL + " TEXT," + KEY_HALL + " TEXT," + KEY_MEAL
-                + " TEXT," + KEY_SECTION + " TEXT" + ")";
+                + " TEXT," + KEY_SECTION + " TEXT," + KEY_DESCRIPTORS + " TEXT" + ")";
         db.execSQL(CREATE_MEAL_ITEMS_TABLE);
     }
 
@@ -64,6 +65,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_HALL, mealItem.getHall());
         values.put(KEY_MEAL, mealItem.getMeal());
         values.put(KEY_SECTION, mealItem.getSection());
+        values.put(KEY_DESCRIPTORS, mealItem.getDescriptors());
 
         // Insert Row
         db.insert(TABLE_MEAL_ITEMS, null, values);
@@ -79,7 +81,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (cursor != null)
             cursor.moveToFirst();
 
-        return new MealItem(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5));
+        return new MealItem(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5), cursor.getString(6));
     }
 
     // Getting All MealItems
@@ -101,6 +103,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 mealItem.setHall(cursor.getString(3));
                 mealItem.setMeal(cursor.getString(4));
                 mealItem.setSection(cursor.getString(5));
+                mealItem.setDescrptors(cursor.getString(6));
 
                 // Add mealItem to list
                 mealItemList.add(mealItem);
@@ -123,6 +126,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_HALL, mealItem.getHall());
         values.put(KEY_MEAL, mealItem.getMeal());
         values.put(KEY_SECTION, mealItem.getSection());
+        values.put(KEY_DESCRIPTORS, mealItem.getDescriptors());
 
         // updating row
         return db.update(TABLE_MEAL_ITEMS, values, KEY_NAME + " = ?",

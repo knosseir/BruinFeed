@@ -28,6 +28,8 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -241,16 +243,25 @@ public class MainActivity extends AppCompatActivity
                     for (Element link : links) {
                         if (link.tagName().equals("a")) {
                             String description;
+                            String descriptors = "";
                             Element parent = link.parent().parent();
                             if (parent != null) {
                                 Elements descriptionElement = parent.select("div.tt-description");
+                                Elements descriptorElement = parent.select("div.tt-prodwebcode");
                                 String mealUrl = link.attr("href");
                                 if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
                                     description = parent.select("div.tt-description").text();
-                                    db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section));
                                 } else {
-                                    db.addMealItem(new MealItem(link.ownText(), "No description available", mealUrl, diningHall, meal, section));
+                                    description = "No description available";
                                 }
+
+                                if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
+                                    for (Element e : descriptorElement) {
+                                        descriptors += (e.ownText()) + '\n';
+                                    }
+                                }
+
+                                db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors));
                             }
                         } else if (link.tagName().equals("li")) {
                             section = link.ownText();

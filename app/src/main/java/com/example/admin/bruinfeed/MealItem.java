@@ -7,8 +7,7 @@ import android.util.Log;
 import java.util.ArrayList;
 
 public class MealItem implements Parcelable {
-    private String mName, mDescription, mUrl, mHall, mMeal, mSection;
-    private ArrayList<String> mDescriptors = new ArrayList<>();
+    private String mName, mDescription, mUrl, mHall, mMeal, mSection, mDescriptors;
 
     public MealItem() {
         mName = "Name";
@@ -17,7 +16,7 @@ public class MealItem implements Parcelable {
         mHall = "Hall";
         mMeal = "Meal";
         mSection = "Section";
-        mDescriptors = new ArrayList<>();
+        mDescriptors = "Descriptors";
     }
 
     public MealItem(String name, String description, String url, String hall, String meal, String section) {
@@ -27,10 +26,10 @@ public class MealItem implements Parcelable {
         mHall = hall;
         mMeal = meal;
         mSection = section;
-        mDescriptors = new ArrayList<>();
+        mDescriptors = "";
     }
 
-    public MealItem(String name, String description, String url, String hall, String meal, String section, ArrayList<String> descriptors) {
+    public MealItem(String name, String description, String url, String hall, String meal, String section, String descriptors) {
         mName = name;
         mDescription = description;
         mUrl = url;
@@ -51,7 +50,7 @@ public class MealItem implements Parcelable {
         dest.writeString(mHall);
         dest.writeString(mMeal);
         dest.writeString(mSection);
-        dest.writeStringList(mDescriptors);
+        dest.writeString(mDescriptors);
     }
 
     public int describeContents() {
@@ -65,7 +64,7 @@ public class MealItem implements Parcelable {
         mHall = in.readString();
         mMeal = in.readString();
         mSection = in.readString();
-        in.readStringList(mDescriptors);
+        mDescriptors = in.readString();
     }
 
     @Override
@@ -120,9 +119,9 @@ public class MealItem implements Parcelable {
 
     public void setSection(String section) { mSection = section; }
 
-    public ArrayList<String> getDescriptors() { return mDescriptors; }
+    public String getDescriptors() { return mDescriptors; }
 
-    public void addDescriptor(String descriptor) { mDescriptors.add(descriptor); }
+    public void addDescriptor(String descriptor) { mDescriptors += descriptor + '\n'; }
 
-    public void setDescrptors(ArrayList<String> descriptors) { mDescriptors = descriptors; }
+    public void setDescrptors(String descriptors) { mDescriptors = descriptors; }
 }

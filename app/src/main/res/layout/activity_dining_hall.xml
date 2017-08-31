@@ -7,15 +7,10 @@
     android:orientation="vertical"
     tools:context="com.example.admin.bruinfeed.DiningHallActivity">
 
-    <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/menuRefresh"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1">
-
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent"
+            android:layout_weight="1">
 
             <TextView
                 android:id="@+id/activityLevelTextBox"
@@ -46,8 +41,6 @@
                 android:scrollbars="vertical" />
 
         </RelativeLayout>
-
-    </android.support.v4.widget.SwipeRefreshLayout>
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation"

@@ -53,42 +53,10 @@ public class DiningHallActivity extends AppCompatActivity {
 
     private ProgressBar activityLevelProgressBar;
 
-    SwipeRefreshLayout menuRefresh;
-
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.bottom_breakfast_button:
-                    meal = "Breakfast";
-                    break;
-                case R.id.bottom_lunch_button:
-                    meal = "Lunch";
-                    break;
-                case R.id.bottom_dinner_button:
-                    meal = "Dinner";
-                    break;
-            }
-            url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
-
-            menuRefresh.setRefreshing(true);
-            AsyncTaskRunner runner = new AsyncTaskRunner();
-            runner.execute(url);
-
-            return true;
-        }
-
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dining_hall);
-
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         recyclerView = (RecyclerView) findViewById(R.id.menuRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
@@ -96,11 +64,10 @@ public class DiningHallActivity extends AppCompatActivity {
         mAdapter = new SimpleAdapter(getBaseContext(), menuItems);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        menuRefresh = (SwipeRefreshLayout) findViewById(R.id.menuRefresh);
+        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
-
-        // db = new DatabaseHandler(this, "allMeals");
 
         // get current hour of day
         Calendar cal = Calendar.getInstance();
@@ -127,144 +94,64 @@ public class DiningHallActivity extends AppCompatActivity {
         url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
         setTitle(meal + " at " + selectedDiningHall);
 
-        menuRefresh.setColorSchemeColors(Color.rgb(244, 205, 65));
+        if (activityLevel == 0) {
+            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
+        } else {
+            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
+        }
+        activityLevelProgressBar.setProgress(activityLevel);
 
-        menuRefresh.setRefreshing(true);
-
-        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-        asyncTaskRunner.execute(url);
-
-        // refreshes menu upon pull to refresh
-        menuRefresh.setOnRefreshListener(
-                new SwipeRefreshLayout.OnRefreshListener() {
-                    @Override
-                    public void onRefresh() {
-                        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-                        asyncTaskRunner.execute(url);
-                    }
-                }
-        );
+        getMeals(selectedDiningHall, meal);
     }
 
-    private class AsyncTaskRunner extends AsyncTask<String, String, Boolean> {
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
-        protected Boolean doInBackground(String... params) {
-            try {
-                Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
-                Elements links = doc.select("a.recipeLink, li.sect-item");
-                menuItems.clear();
-                sections.clear();
-
-                String section = "";
-
-                // TODO: RETRIEVE ITEMS FROM DATABASE INSTEAD OF FROM ONLINE
-                for (Element link : links) {
-                    if (link.tagName().equals("a")) {
-                        String description;
-                        ArrayList<String> descriptors = new ArrayList<>();
-                        Element parent = link.parent().parent();
-                        if (parent != null) {
-                            Elements descriptionElement = parent.select("div.tt-description");
-                            Elements descriptorElement = parent.select("div.tt-prodwebcode");
-                            String url = link.attr("href");
-                            if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
-                                description = descriptionElement.text();
-                            } else {
-                                description = "No description available";
-                            }
-
-                            if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
-                                for (Element e : descriptorElement) {
-                                    descriptors.add(e.ownText());
-                                }
-                            }
-                            Log.e("descriptors size", descriptors.size() + "");
-                            menuItems.add(new MealItem(link.ownText(), description, url, selectedDiningHall, meal, section, descriptors));
-                        }
-                    } else if (link.tagName().equals("li")) {
-                        section = link.ownText();
-                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size(), section));
-                    }
-                }
-
-                // Add adapter to the sectionAdapter
-                SimpleSectionedRecyclerViewAdapter.Section[] array = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
-                mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
-                mSectionedAdapter.setSections(sections.toArray(array));
-
-            } catch (SocketTimeoutException e) {
-                Log.e(DiningHallTag, e.toString());
-                updateMenuRecyclerView();
-                reload(R.string.connection_timeout);
-                return false;
-            } catch (IOException | IllegalArgumentException e) {
-                Log.e(DiningHallTag, e.toString());
-                updateMenuRecyclerView();
-                reload(R.string.retry_connection);
-                return false;
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.bottom_breakfast_button:
+                    getMeals(selectedDiningHall, "Breakfast");
+                    break;
+                case R.id.bottom_lunch_button:
+                    getMeals(selectedDiningHall, "Lunch");
+                    break;
+                case R.id.bottom_dinner_button:
+                    getMeals(selectedDiningHall, "Dinner");
+                    break;
             }
 
-            if (menuItems.size() > 0)
-                return true;
-            return false;
+            return true;
         }
 
-        protected void onPostExecute(Boolean result) {
-//            if (result)
-//                updateMenuRecyclerView();
-//            else {
-//                menuRefresh.setRefreshing(false);
-//                reload(R.string.no_items_loaded);
-//            }
-            updateMenuRecyclerView();
+    };
 
+    public void getMeals(String selectedDiningHall, String meal) {
+        DatabaseHandler db = new DatabaseHandler(this);
+        List<MealItem> allItems = db.getAllMealItems();
+
+        menuItems.clear();
+        sections.clear();
+        String section = "";
+
+        // TODO: RETRIEVE USING SQL QUERIES
+        for (MealItem mealItem : allItems) {
+            if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal)) {
+                menuItems.add(mealItem);
+                if (!mealItem.getSection().equals(section)) {
+                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getSection()));
+                    section = mealItem.getSection();
+                }
+            }
         }
-    }
 
-    public void updateMenuRecyclerView() {
-        // update RecyclerView with menu and set action bar title on UI thread
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                recyclerView.setAdapter(mSectionedAdapter);
-                mAdapter.notifyDataSetChanged();
+        // Add adapter to the sectionAdapter
+        SimpleSectionedRecyclerViewAdapter.Section[] array = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
+        mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
+        mSectionedAdapter.setSections(sections.toArray(array));
 
-                /*
-                if (menuItemNames.isEmpty()) {
-                    final Snackbar emptyMenuSnackbar = Snackbar.make(findViewById(R.id.menuRecyclerView), R.string.empty_menu, Snackbar.LENGTH_INDEFINITE);
-                    emptyMenuSnackbar.setAction("OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            emptyMenuSnackbar.dismiss();
-                        }
-                    });
-                    emptyMenuSnackbar.show();
-                }
-                */
-
-                setTitle(meal + " at " + selectedDiningHall);
-                if (activityLevel == 0) {
-                    activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
-                } else {
-                    activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
-                }
-                activityLevelProgressBar.setProgress(activityLevel);
-                menuRefresh.setRefreshing(false);
-            }
-        });
-    }
-
-    public void reload(int error) {
-        Snackbar reloadSnackbar = Snackbar.make(findViewById(R.id.menuRecyclerView), error, Snackbar.LENGTH_INDEFINITE);
-        reloadSnackbar.setAction(R.string.retry, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                menuRefresh.setRefreshing(true);
-                AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-                asyncTaskRunner.execute(url);
-            }
-        });
-        reloadSnackbar.show();
+        recyclerView.setAdapter(mSectionedAdapter);
+        recyclerView.getRecycledViewPool().clear();
+        mAdapter.notifyDataSetChanged();
     }
 }
