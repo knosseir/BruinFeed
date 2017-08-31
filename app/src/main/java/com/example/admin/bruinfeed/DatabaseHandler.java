@@ -28,6 +28,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_MEAL = "meal";
     private static final String KEY_SECTION = "section";
 
+
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -145,5 +146,10 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
         // return count
         return cursor.getCount();
+    }
+
+    public void clear()
+    {   SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_MEAL_ITEMS, null, null);
     }
 }

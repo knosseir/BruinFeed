@@ -50,6 +50,7 @@ public class MealItem implements Parcelable {
         mSection = in.readString();
     }
 
+    @Override
     public boolean equals(Object other) {
         MealItem m = (MealItem) other;
         return other != null && mName.equals(m.getName());

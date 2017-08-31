@@ -8,6 +8,7 @@
     <string name="title_activity_dining_hall">DiningHallActivity</string>
     <string name="title_activity_meal_item">MealItemActivity</string>
     <string name="title_activity_favorites">FavoritesActivity</string>
+    <string name="title_activity_meal_period">>MealPeriodActivity</string>
     <string name="title_breakfast">Breakfast</string>
     <string name="title_lunch">Lunch</string>
     <string name="title_dinner">Dinner</string>

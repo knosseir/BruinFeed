@@ -55,8 +55,6 @@ public class DiningHallActivity extends AppCompatActivity {
 
     SwipeRefreshLayout menuRefresh;
 
-    DatabaseHandler db;
-
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 

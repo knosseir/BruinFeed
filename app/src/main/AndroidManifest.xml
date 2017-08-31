@@ -51,6 +51,11 @@
                 android:name="android.app.shortcuts"
                 android:value="com.example.admin.bruinfeed.MainActivity" />
         </activity>
+        <activity
+            android:name=".MealPeriodActivity"
+            android:label="@string/title_activity_meal_period"
+            android:parentActivityName=".MainActivity">
+        </activity>
     </application>
 
 </manifest>
