@@ -30,4 +30,6 @@
     <string name="favorites_static_shortcut_short_label">Favorites</string>
     <string name="favorites_static_shortcut_disabled_message">Disabled</string>
 
+    <string name="search_title">Search</string>
+
 </resources>

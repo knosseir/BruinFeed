@@ -20,7 +20,9 @@ import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -150,12 +152,24 @@ public class MealItemActivity extends AppCompatActivity {
                 Document document = Jsoup.connect(params[0]).timeout(10 * 1000).get();
 
                 Elements nutritionFactElements = document.select("div.nfbox");
+                Element ingredAllergensElement = document.select("div.ingred_allergen").get(0);
 
                 if (nutritionFactElements.size() > 0 && nutritionFactElements.get(0) != null) {
                     nutritionFactsHtml = nutritionFactElements.get(0).toString();
                 } else {
-                    // TODO: handle case with no nutrition facts available
+                    // TODO: CHECK THAT THIS CASE IS HANDLED PROPERLY BY ONPOSTEXECUTE()
+                    nutritionFactsHtml = "No nutrition facts available for this item.";
                 }
+
+//                String[] ingredAllergens = {};
+//                for (int i = 0; i < ingredAllergensElement.children().size(); i++) {
+//                     ingredAllergens[i] = ingredAllergensElement.child(0).ownText();
+//                }
+//
+//                String ingredAllergensText = "Ingredients: " + '\n' + ingredAllergens[0] + '\n' + "Allergens: " + '\n' + ingredAllergens[1];
+//
+//                TextView ingredAllergensTextView = (TextView) findViewById(R.id.ingred_allergen_list);
+                // ingredAllergensTextView.setText(ingredAllergensText);
 
             } catch (IOException e) {
                 Log.e(MealItemTag, e.toString());

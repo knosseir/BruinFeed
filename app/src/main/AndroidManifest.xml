@@ -54,7 +54,8 @@
         <activity
             android:name=".MealPeriodActivity"
             android:label="@string/title_activity_meal_period"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>
 

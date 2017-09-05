@@ -8,4 +8,5 @@
 
     <color name="accent">#ffeb3b</color>
     <color name="Open">#15a32a</color>
+    <color name="background_material_dark">#303030</color>
 </resources>
