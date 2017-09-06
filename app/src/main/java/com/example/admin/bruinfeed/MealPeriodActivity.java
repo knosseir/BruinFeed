@@ -1,5 +1,6 @@
 package com.example.admin.bruinfeed;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -25,6 +26,7 @@ public class MealPeriodActivity extends AppCompatActivity {
     private SimpleAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     SimpleSectionedRecyclerViewAdapter mSectionedAdapter;
+    MaterialSearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,34 +70,46 @@ public class MealPeriodActivity extends AppCompatActivity {
         mAdapter.notifyDataSetChanged();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(Color.WHITE);
         setSupportActionBar(toolbar);
 
-        MaterialSearchView searchView = (MaterialSearchView) findViewById(R.id.search_view);
+        searchView = (MaterialSearchView) findViewById(R.id.search_view);
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                List<MealItem> queryItems = new ArrayList<>();
-                for (MealItem mealItem : search) {
-                    if (mealItem.getName().toLowerCase().contains(query.toLowerCase()) && !queryItems.contains(mealItem))
-                        queryItems.add(mealItem);
+                setTitle("Search results for: " + query);
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (newText.equals("")) {
+                    return true;
                 }
+
+                List<MealItem> queryItems = new ArrayList<>();
+                String section = "";
 
                 menuItems.clear();
                 sections.clear();
+
+                for (MealItem mealItem : search) {
+                    if (mealItem.getName().toLowerCase().contains(newText.toLowerCase()) && !queryItems.contains(mealItem)) {
+                        queryItems.add(mealItem);
+//                        if (!mealItem.getHall().equals(section)) {
+//                            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getHall()));
+//                            section = mealItem.getHall();
+//                        }
+                    }
+                }
+
                 menuItems.addAll(queryItems);
 
                 mSectionedAdapter.notifyDataSetChanged();
                 mAdapter.notifyDataSetChanged();
 
-                setTitle("Search results for: " + query);
-
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-
-                return false;
+                return true;
             }
         });
 
@@ -119,5 +133,14 @@ public class MealPeriodActivity extends AppCompatActivity {
         searchView.setMenuItem(item);
 
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (searchView.isSearchOpen()) {
+            searchView.closeSearch();
+        } else {
+            super.onBackPressed();
+        }
     }
 }

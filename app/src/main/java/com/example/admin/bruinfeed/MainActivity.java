@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -76,6 +77,7 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView.LayoutManager mLayoutManager;
 
     private DatabaseHandler db = new DatabaseHandler(this);
+    Snackbar loadingSnackbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +101,9 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        loadingSnackbar = Snackbar.make(findViewById(R.id.diningHallRecyclerView), "Please wait while dining information is loaded...", Snackbar.LENGTH_INDEFINITE);
+        loadingSnackbar.show();
 
         if (!isOnline()) {
             reload(R.string.no_internet);
@@ -230,6 +235,11 @@ public class MainActivity extends AppCompatActivity
             return "success";
         }
 
+        @Override
+        protected void onPostExecute(String s) {
+            loadingSnackbar.dismiss();
+        }
+
         public boolean getMeals(String diningHall) {
             try {
                 String[] meals = { "Breakfast", "Lunch", "Dinner" };
@@ -257,8 +267,13 @@ public class MainActivity extends AppCompatActivity
 
                                 if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
                                     for (Element e : descriptorElement) {
-                                        descriptors += (e.ownText()) + '\n';
+                                        descriptors += (e.ownText()) + ", ";
                                     }
+                                }
+
+                                // remove ending comma and any leading or ending spaces
+                                if (descriptors.length() > 0 && descriptors.charAt(descriptors.length() - 2) == ',') {
+                                    descriptors = descriptors.substring(0, descriptors.length() - 2).trim();
                                 }
 
                                 db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors));

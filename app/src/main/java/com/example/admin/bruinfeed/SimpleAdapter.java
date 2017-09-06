@@ -62,7 +62,16 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         final MealItem temp = mData.get(position);
 
         holder.title.setText(temp.getName());
-        holder.description.setText(temp.getDescription());
+
+        String description = temp.getDescription();
+
+        // if meal item does not have a description, then display other useful information
+        if (description.equals("No description available") && temp.getDescriptors() != null) {
+            holder.description.setText(temp.getDescriptors());
+        }
+        else {
+            holder.description.setText(description);
+        }
 
         View.OnClickListener menuItemOnClickListener = new View.OnClickListener() {
             @Override
