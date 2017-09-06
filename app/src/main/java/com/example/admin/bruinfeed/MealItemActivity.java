@@ -48,9 +48,9 @@ public class MealItemActivity extends AppCompatActivity {
 
         db = new DatabaseHandler(this);
 
+        // retrieve information about the selected meal item
         selectedItem = getIntent().getParcelableExtra("MealItem");
         name = selectedItem.getName();
-
         description = selectedItem.getDescription();
         url = selectedItem.getUrl();
         hall = selectedItem.getHall();
@@ -64,6 +64,10 @@ public class MealItemActivity extends AppCompatActivity {
         favorite = favSettings.getBoolean(selectedItem.getName(), false);
 
         setTitle(name);
+
+        // retrieve nutrition facts information asynchronously
+        AsyncTaskRunner runner = new AsyncTaskRunner();
+        runner.execute(url);
 
         TextView foundAt = (TextView) findViewById(R.id.found_at_list);
 
@@ -86,9 +90,6 @@ public class MealItemActivity extends AppCompatActivity {
         TextView descriptorList = (TextView) findViewById(R.id.descriptor_list);
 
         descriptorList.setText(descriptorText);
-
-        AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.execute(url);
     }
 
     @Override
@@ -98,7 +99,7 @@ public class MealItemActivity extends AppCompatActivity {
 
         MenuItem fav_button = menu.findItem(R.id.action_favorite);
 
-        if (favorite) {  // item is a favorite
+        if (favorite) {  // if item is a user favorite, set favorite icon as already enabled
             fav_button.setIcon(getResources().getDrawable(R.drawable.ic_star_black_24dp));
         }
 

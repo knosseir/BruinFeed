@@ -1,5 +1,6 @@
 package com.example.admin.bruinfeed;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -7,8 +8,11 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
@@ -44,8 +48,7 @@ public class MealPeriodActivity extends AppCompatActivity {
         DatabaseHandler db = new DatabaseHandler(this);
         allItems = db.getAllMealItems();
 
-        String diningHall = allItems.get(0).getHall();
-        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(0, diningHall));
+        String diningHall = "";
 
         // TODO: ADD SECTIONS FROM EACH DINING HALL
         for (MealItem mealItem : allItems) {
@@ -58,33 +61,46 @@ public class MealPeriodActivity extends AppCompatActivity {
             }
         }
 
-        final List<MealItem> search = new ArrayList<>(menuItems);
+        final List<MealItem> originalMenuItems = new ArrayList<>(menuItems);
+        final List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>(sections);
 
-        // Add adapter to the sectionAdapter
-        SimpleSectionedRecyclerViewAdapter.Section[] array = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
-        mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
-        //mSectionedAdapter.setSections(sections.toArray(array));
-
-        // Update RecyclerView
-        recyclerView.setAdapter(mSectionedAdapter);
-        mAdapter.notifyDataSetChanged();
+        updateRecyclerView();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(Color.WHITE);
+        toolbar.setTitleTextColor(Color.WHITE);toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_white_24dp));
+
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         searchView = (MaterialSearchView) findViewById(R.id.search_view);
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                setTitle("Search results for: " + query);
+                onQueryTextChange(query);
+
+                // hide keyboard after search is submitted and results are displayed
+                View view = getCurrentFocus();
+                if (view != null) {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                }
 
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                // if search query is blank, reset results and show all meal items and sections
                 if (newText.equals("")) {
+                    menuItems.clear();
+                    menuItems.addAll(originalMenuItems);
+
+                    sections.clear();
+                    sections.addAll(originalSections);
+
+                    updateRecyclerView();
+
                     return true;
                 }
 
@@ -94,20 +110,19 @@ public class MealPeriodActivity extends AppCompatActivity {
                 menuItems.clear();
                 sections.clear();
 
-                for (MealItem mealItem : search) {
-                    if (mealItem.getName().toLowerCase().contains(newText.toLowerCase()) && !queryItems.contains(mealItem)) {
+                for (MealItem mealItem : originalMenuItems) {
+                    if (mealItem.getName().toLowerCase().contains(newText.toLowerCase())) {
                         queryItems.add(mealItem);
-//                        if (!mealItem.getHall().equals(section)) {
-//                            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getHall()));
-//                            section = mealItem.getHall();
-//                        }
+                        if (!mealItem.getHall().equals(section)) {
+                            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getHall()));
+                            section = mealItem.getHall();
+                        }
                     }
                 }
 
                 menuItems.addAll(queryItems);
 
-                mSectionedAdapter.notifyDataSetChanged();
-                mAdapter.notifyDataSetChanged();
+                updateRecyclerView();
 
                 return true;
             }
@@ -122,6 +137,23 @@ public class MealPeriodActivity extends AppCompatActivity {
             public void onSearchViewClosed() {
             }
         });
+    }
+
+    public void updateRecyclerView() {
+        // Add adapter to the sectionAdapter
+        SimpleSectionedRecyclerViewAdapter.Section[] array = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
+        mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
+        mSectionedAdapter.setSections(sections.toArray(array));
+
+        // Update RecyclerView
+        recyclerView.setAdapter(mSectionedAdapter);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 
     @Override

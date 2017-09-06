@@ -189,16 +189,18 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private class AsyncTaskRunner extends AsyncTask<String, String, String> {
+    private class AsyncTaskRunner extends AsyncTask<String, String, Void> {
 
         @Override
-        protected String doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
             try {
+                // check for internet connectivity
                 if (!isOnline()) {
                     reload(R.string.no_internet);
-                    return "No internet connection!";
+                    return null;
                 }
 
+                // connect to url, set 10 second timeout in case internet connection is slow
                 Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
 
                 Elements diningHalls = doc.select("h3");
@@ -210,6 +212,7 @@ public class MainActivity extends AppCompatActivity
                 diningHallNames.clear();
                 diningHallNames.addAll(diningHallTemp);
 
+                // get meals from all dining halls
                 for (String diningHall : diningHallNames) {
                     getMeals(diningHall);
                 }
@@ -224,19 +227,19 @@ public class MainActivity extends AppCompatActivity
                 Log.e(MainTag, e.toString());
                 updateRecyclerView();
                 reload(R.string.connection_timeout);
-                return "error";
+                return null;
             } catch (IOException | IllegalArgumentException e) {
                 Log.e(MainTag, e.toString());
                 updateRecyclerView();
                 reload(R.string.retry_connection);
-                return "error";
+                return null;
             }
 
-            return "success";
+            return null;
         }
 
         @Override
-        protected void onPostExecute(String s) {
+        protected void onPostExecute(Void result) {
             loadingSnackbar.dismiss();
         }
 
@@ -276,6 +279,7 @@ public class MainActivity extends AppCompatActivity
                                     descriptors = descriptors.substring(0, descriptors.length() - 2).trim();
                                 }
 
+                                // add meal item to local SQLite database for future access
                                 db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors));
                             }
                         } else if (link.tagName().equals("li")) {
@@ -455,8 +459,8 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onBindViewHolder(ViewHolder holder, final int position) {
-            // - get element from dataset at this position
-            // - replace the contents of the view with that element
+            // get element from data set at this position
+            // replace the contents of the view with that element
             final String diningHall = values.get(position);
             holder.header.setText(diningHall);
 

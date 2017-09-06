@@ -57,17 +57,21 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
     public void onBindViewHolder(SimpleViewHolder holder, final int position) {
         // - get element from dataset at this position
         // - replace the contents of the view with that element
-        if (mData.size() == 0) return;
+        if (mData.isEmpty()) return;
+
+        if (position >= mData.size() || mData.get(position) == null) {
+            return;
+        }
 
         final MealItem temp = mData.get(position);
-
         holder.title.setText(temp.getName());
 
         String description = temp.getDescription();
+        String descriptors = temp.getDescriptors();
 
         // if meal item does not have a description, then display other useful information
-        if (description.equals("No description available") && temp.getDescriptors() != null) {
-            holder.description.setText(temp.getDescriptors());
+        if (description.equals("No description available") && !descriptors.equals("")) {
+            holder.description.setText(descriptors);
         }
         else {
             holder.description.setText(description);
