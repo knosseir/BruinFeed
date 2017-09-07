@@ -248,7 +248,6 @@ public class MealPeriodActivity extends AppCompatActivity {
         menuItems.clear();
         sections.clear();
         menuItems.addAll(originalMenuItems);
-        sections.addAll(originalSections);
 
         SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
 
@@ -279,7 +278,7 @@ public class MealPeriodActivity extends AppCompatActivity {
 
         if (menuItems.size() > 0) {
             // update sections after items have been filtered out
-            String hall = menuItems.get(0).getHall();
+            String hall = "";
             for (int i = 0; i < menuItems.size(); i++) {
                 MealItem mealItem = menuItems.get(i);
                 if (!mealItem.getHall().equals(hall)) {

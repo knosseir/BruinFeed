@@ -1,13 +1,14 @@
 package com.example.admin.bruinfeed;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -26,6 +27,7 @@ import java.util.List;
 public class DiningHallActivity extends AppCompatActivity {
 
     private static final String DiningHallTag = "DiningHallActivity";
+    public static final String FILTER_PREFERENCES_NAME = "DiningFilterPrefs";
 
     String url, meal;
     int activityLevel = 0;
@@ -34,6 +36,8 @@ public class DiningHallActivity extends AppCompatActivity {
 
     String selectedDiningHall;
     MaterialSearchView searchView;
+
+    String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy;
 
     private RecyclerView recyclerView;
     private SimpleAdapter mAdapter;
@@ -63,12 +67,26 @@ public class DiningHallActivity extends AppCompatActivity {
         activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.dining_toolbar);
-        // toolbar.setTitleTextColor(Color.WHITE);
         toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        vegan = getResources().getString(R.string.vegan);
+        vegetarian = getResources().getString(R.string.vegetarian);
+        no_nuts = getResources().getString(R.string.no_nuts);
+        nuts = getResources().getString(R.string.nuts);
+        no_dairy = getResources().getString(R.string.no_dairy);
+        dairy = getResources().getString(R.string.dairy);
+        no_eggs = getResources().getString(R.string.no_eggs);
+        eggs = getResources().getString(R.string.eggs);
+        no_wheat = getResources().getString(R.string.no_wheat);
+        wheat = getResources().getString(R.string.wheat);
+        no_soy = getResources().getString(R.string.no_soy);
+        soy = getResources().getString(R.string.soy);
+
+        clearFilters();
 
         // get current hour of day
         Calendar cal = Calendar.getInstance();
@@ -188,8 +206,102 @@ public class DiningHallActivity extends AppCompatActivity {
         MenuItem item = menu.findItem(R.id.action_search);
         searchView.setMenuItem(item);
 
+        final MenuItem filterButton = menu.findItem(R.id.dining_filter_button);
+        filterButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                PopupMenu filterPopup = new PopupMenu(DiningHallActivity.this, findViewById(R.id.dining_filter_button));
+                filterPopup.getMenuInflater().inflate(R.menu.filter_popup, filterPopup.getMenu());
+
+                SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
+
+                for (int i = 0; i < filterPopup.getMenu().size(); i++) {
+                    MenuItem menuItem = filterPopup.getMenu().getItem(i);
+                    if (filters.getBoolean(menuItem.getTitle().toString(), false)) {
+                        menuItem.setChecked(true);
+                    }
+                }
+
+                filterPopup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        item.setChecked(!item.isChecked());
+
+                        // Keep the popup menu open
+                        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+                        item.setActionView(new View(getBaseContext()));
+
+                        toggleDescriptors(item.getTitle().toString(), item.isChecked());
+
+                        return false;
+                    }
+                });
+                filterPopup.show();
+                return true;
+            }
+        });
+
+
         return true;
     }
+
+    public void toggleDescriptors(String descriptor, boolean toggle) {
+        SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
+        SharedPreferences.Editor editor = filters.edit();
+
+        editor.putBoolean(descriptor, toggle);
+        editor.apply();
+
+        filterMenuItems();
+
+        updateRecyclerView();
+    }
+
+    public void filterMenuItems() {
+        menuItems.clear();
+        sections.clear();
+        menuItems.addAll(originalMenuItems);
+
+        SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
+
+        // remove items that have been filtered out
+        for (MealItem mealItem : originalMenuItems) {
+            if (filters.getBoolean(vegan, false) && !mealItem.getDescriptors().contains(vegan)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(vegetarian, false) && !mealItem.getDescriptors().contains(vegetarian)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_nuts, false) && mealItem.getDescriptors().contains(nuts)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_dairy, false) && mealItem.getDescriptors().contains(dairy)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_eggs, false) && mealItem.getDescriptors().contains(eggs)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_wheat, false) && mealItem.getDescriptors().contains(wheat)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_soy, false) && mealItem.getDescriptors().contains(soy)) {
+                menuItems.remove(mealItem);
+            }
+        }
+
+        if (menuItems.size() > 0) {
+            // update sections after items have been filtered out
+            String section = "";
+            for (int i = 0; i < menuItems.size(); i++) {
+                MealItem mealItem = menuItems.get(i);
+                if (!mealItem.getSection().equals(section)) {
+                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(i, mealItem.getSection()));
+                    section = mealItem.getSection();
+                }
+            }
+        }
+    }
+
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -207,6 +319,8 @@ public class DiningHallActivity extends AppCompatActivity {
                     getMeals(selectedDiningHall, "Dinner");
                     break;
             }
+
+            clearFilters();
 
             return true;
         }
@@ -236,6 +350,19 @@ public class DiningHallActivity extends AppCompatActivity {
         originalSections = new ArrayList<>(sections);
 
         updateRecyclerView();
+    }
+
+    public void clearFilters() {
+        SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
+        SharedPreferences.Editor editor = filters.edit();
+
+        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy };
+
+        // uncheck all filters by default
+        for (String descriptor : mealDescriptorArray) {
+            editor.putBoolean(descriptor, false);
+        }
+        editor.apply();
     }
 
     @Override
