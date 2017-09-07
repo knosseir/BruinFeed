@@ -3,19 +3,24 @@ package com.example.admin.bruinfeed;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class MealPeriodActivity extends AppCompatActivity {
@@ -24,6 +29,8 @@ public class MealPeriodActivity extends AppCompatActivity {
     List<SimpleSectionedRecyclerViewAdapter.Section> sections = new ArrayList<>();
     List<MealItem> menuItems = new ArrayList<>();
     List<MealItem> allItems = new ArrayList<>();
+    List<MealItem> originalMenuItems = new ArrayList<>();
+    List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>();
 
     private RecyclerView recyclerView;
     private SimpleAdapter mAdapter;
@@ -60,13 +67,13 @@ public class MealPeriodActivity extends AppCompatActivity {
             }
         }
 
-        final List<MealItem> originalMenuItems = new ArrayList<>(menuItems);
-        final List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>(sections);
+        originalMenuItems = new ArrayList<>(menuItems);
+        originalSections = new ArrayList<>(sections);
 
         updateRecyclerView();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(Color.WHITE);toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_white_24dp));
+        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -162,6 +169,54 @@ public class MealPeriodActivity extends AppCompatActivity {
 
         MenuItem item = menu.findItem(R.id.action_search);
         searchView.setMenuItem(item);
+
+        final MenuItem filterButton = menu.findItem(R.id.dining_filter_button);
+        filterButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                PopupMenu filterPopup = new PopupMenu(MealPeriodActivity.this, findViewById(R.id.dining_filter_button));
+                filterPopup.getMenuInflater().inflate(R.menu.filter_popup, filterPopup.getMenu());
+
+                filterPopup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        item.setChecked(!item.isChecked());
+
+                        // Keep the popup menu open
+                        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+                        item.setActionView(new View(getBaseContext()));
+
+//                        for (MealItem mealItem : menuItems) {
+//                            if (item.getTitle().equals("Vegan Menu Option") && !mealItem.getDescriptors().contains("Vegan Menu Item")) {
+//                                menuItems.remove(mealItem);
+//                            }
+//                        }
+
+                        // use iterator to avoid ConcurrentModificationException
+                        Iterator<MealItem> iter = menuItems.iterator();
+
+                        while (iter.hasNext()) {
+                            MealItem mealItem = iter.next();
+
+                            if (item.getTitle().equals("Vegan Menu Option") && !mealItem.getDescriptors().contains("Vegan Menu Option") ||
+                                    item.getTitle().equals("Vegetarian Menu Option") && !mealItem.getDescriptors().contains("Vegetarian Menu Option") ||
+                                    item.getTitle().equals("Contains No Tree Nuts") && mealItem.getDescriptors().contains("Contains Tree Nuts") ||
+                                    item.getTitle().equals("Contains No Dairy") && mealItem.getDescriptors().contains("Contains Dairy") ||
+                                    item.getTitle().equals("Contains No Eggs") && mealItem.getDescriptors().contains("Contains Eggs") ||
+                                    item.getTitle().equals("Contains No Wheat") && mealItem.getDescriptors().contains("Contains Wheat") ||
+                                    item.getTitle().equals("Contains No Soy") && mealItem.getDescriptors().contains("Contains Soy")) {
+                                iter.remove();
+                            }
+                        }
+
+                        updateRecyclerView();
+                        return false;
+                    }
+                });
+                filterPopup.show();
+                return true;
+            }
+        });
 
         return true;
     }

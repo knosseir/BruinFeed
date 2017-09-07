@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="all">
+        <item android:id="@+id/vegan"
+            android:title="Vegan Menu Option" />
+        <item android:id="@+id/vegetarian"
+            android:title="Vegetarian Menu Option" />
+        <item android:id="@+id/no_nuts"
+            android:title="Contains No Tree Nuts"/>
+        <item android:id="@+id/no_dairy"
+            android:title="Contains No Dairy"/>
+        <item android:id="@+id/no_eggs"
+            android:title="Contains No Eggs"/>
+        <item android:id="@+id/no_wheat"
+            android:title="Contains No Wheat"/>
+        <item android:id="@+id/no_soy"
+            android:title="Contains No Soy"/>
+    </group>
+</menu>

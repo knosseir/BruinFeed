@@ -63,8 +63,8 @@ public class DiningHallActivity extends AppCompatActivity {
         activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.dining_toolbar);
-        toolbar.setTitleTextColor(Color.WHITE);
-        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_white_24dp));
+        // toolbar.setTitleTextColor(Color.WHITE);
+        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
