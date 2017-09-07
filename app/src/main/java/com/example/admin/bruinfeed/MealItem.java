@@ -2,9 +2,6 @@ package com.example.admin.bruinfeed;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
-
-import java.util.ArrayList;
 
 public class MealItem implements Parcelable {
     private String mName, mDescription, mUrl, mHall, mMeal, mSection, mDescriptors;

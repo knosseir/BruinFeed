@@ -30,6 +30,7 @@
             android:name=".DiningHallActivity"
             android:label="@string/title_activity_dining_hall"
             android:launchMode="singleTop"
+            android:theme="@style/AppTheme.NoActionBar"
             android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
