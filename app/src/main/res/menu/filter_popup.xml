@@ -2,18 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="all">
         <item android:id="@+id/vegan"
-            android:title="Vegan Menu Option" />
+            android:title="@string/vegan" />
         <item android:id="@+id/vegetarian"
-            android:title="Vegetarian Menu Option" />
+            android:title="@string/vegetarian" />
         <item android:id="@+id/no_nuts"
-            android:title="Contains No Tree Nuts"/>
+            android:title="@string/no_nuts"/>
         <item android:id="@+id/no_dairy"
-            android:title="Contains No Dairy"/>
+            android:title="@string/no_dairy"/>
         <item android:id="@+id/no_eggs"
-            android:title="Contains No Eggs"/>
+            android:title="@string/no_eggs"/>
         <item android:id="@+id/no_wheat"
-            android:title="Contains No Wheat"/>
+            android:title="@string/no_wheat"/>
         <item android:id="@+id/no_soy"
-            android:title="Contains No Soy"/>
+            android:title="@string/no_soy"/>
     </group>
 </menu>

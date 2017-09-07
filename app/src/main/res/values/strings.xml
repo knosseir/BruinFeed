@@ -32,4 +32,18 @@
 
     <string name="search_title">Search</string>
 
+    <!-- MealItem descriptors -->
+    <string name="vegan">Vegan Menu Option</string>
+    <string name="vegetarian">Vegetarian Menu Option</string>
+    <string name="no_nuts">Contains No Tree Nuts</string>
+    <string name="nuts">Contains Tree Nuts</string>
+    <string name="no_dairy">Contains No Dairy</string>
+    <string name="dairy">Contains Dairy</string>
+    <string name="no_eggs">Contains No Eggs</string>
+    <string name="eggs">Contains Eggs</string>
+    <string name="no_wheat">Contains No Wheat</string>
+    <string name="wheat">Contains Wheat</string>
+    <string name="no_soy">Contains No Soy</string>
+    <string name="soy">Contains Soy</string>
+
 </resources>

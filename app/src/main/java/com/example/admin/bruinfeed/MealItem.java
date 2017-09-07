@@ -3,7 +3,7 @@ package com.example.admin.bruinfeed;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class MealItem implements Parcelable {
+public class MealItem implements Parcelable, Comparable {
     private String mName, mDescription, mUrl, mHall, mMeal, mSection, mDescriptors;
 
     public MealItem() {
@@ -68,6 +68,12 @@ public class MealItem implements Parcelable {
     public boolean equals(Object other) {
         MealItem m = (MealItem) other;
         return other != null && mName.equals(m.getName());
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        MealItem m = (MealItem) o;
+        return (mName.compareTo(m.getName()));
     }
 
     public static final Parcelable.Creator CREATOR =
