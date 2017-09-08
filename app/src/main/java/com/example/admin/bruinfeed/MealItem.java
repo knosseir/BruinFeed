@@ -1,10 +1,15 @@
 package com.example.admin.bruinfeed;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 public class MealItem implements Parcelable, Comparable {
     private String mName, mDescription, mUrl, mHall, mMeal, mSection, mDescriptors;
+    boolean mFavorite;
+
+    public static final String FAVORITE_PREFERENCES_NAME = "FavPrefs";
 
     public MealItem() {
         mName = "Name";
@@ -127,4 +132,17 @@ public class MealItem implements Parcelable, Comparable {
     public void addDescriptor(String descriptor) { mDescriptors += descriptor + '\n'; }
 
     public void setDescrptors(String descriptors) { mDescriptors = descriptors; }
+
+    public void setFavorite(Context context, boolean favorite) {
+        SharedPreferences favPrefs = context.getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
+        SharedPreferences.Editor editor = favPrefs.edit();
+
+        editor.putBoolean(mName, favorite);
+        editor.apply();
+    }
+
+    public boolean getFavorite(Context context) {
+        SharedPreferences favPrefs = context.getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
+        return favPrefs.getBoolean(mName, false);
+    }
 }

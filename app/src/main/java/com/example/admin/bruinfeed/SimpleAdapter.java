@@ -10,12 +10,11 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
 public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
-
-    public static final String FAVORITE_PREFERENCES_NAME = "FavPrefs";
 
     private final Context mContext;
     private List<MealItem> mData;
@@ -66,16 +65,15 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             return;
         }
 
-        final MealItem temp = mData.get(position);
-        holder.title.setText(temp.getName());
+        final MealItem selectedMealItem = mData.get(position);
+        holder.title.setText(selectedMealItem.getName());
 
-        String description = temp.getDescription();
-        String descriptors = temp.getDescriptors();
+        String description = selectedMealItem.getDescription();
+        String descriptors = selectedMealItem.getDescriptors();
 
-        final SharedPreferences favSettings = mContext.getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
-        final SharedPreferences.Editor editor = favSettings.edit();
+        final boolean isFavorite = selectedMealItem.getFavorite(mContext);
 
-        boolean isFavorite = favSettings.getBoolean(temp.getName(), false);
+        holder.favorite.setImageResource(R.drawable.ic_star_border_black_24dp);
 
         if (isFavorite) {
             holder.favorite.setImageResource(R.drawable.ic_star_black_24dp);
@@ -88,29 +86,33 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             holder.description.setText(description);
         }
 
+        // create OnClickListener to launch MealItemActivity for the MealItem that was selected
         View.OnClickListener menuItemOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent mealItemIntent = new Intent(mContext, MealItemActivity.class);
-                mealItemIntent.putExtra("MealItem", temp);
+                mealItemIntent.putExtra("MealItem", selectedMealItem);
                 mContext.startActivity(mealItemIntent);
             }
         };
 
+        // create OnCLickListener to favorite a MealItem
         View.OnClickListener favoriteOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                editor.putBoolean(temp.getName(), !favSettings.getBoolean(temp.getName(), false));
-                editor.apply();
-                if (favSettings.getBoolean(temp.getName(), false)) {
-                    holder.favorite.setImageResource(R.drawable.ic_star_black_24dp);
+                selectedMealItem.setFavorite(mContext, !isFavorite);
+                if (selectedMealItem.getFavorite(mContext)) {
+                    Toast.makeText(mContext, "Added to favorites", Toast.LENGTH_SHORT).show();
+                    notifyDataSetChanged();
                 }
                 else {
-                    holder.favorite.setImageResource(R.drawable.ic_star_border_black_24dp);
+                    Toast.makeText(mContext, "Removed from favorites", Toast.LENGTH_SHORT).show();
+                    notifyDataSetChanged();
                 }
             }
         };
 
+        // set the appropriate OnClickListeners
         ((View) holder.title.getParent()).setOnClickListener(menuItemOnClickListener);
         ((View) holder.description.getParent()).setOnClickListener(menuItemOnClickListener);
         holder.favorite.setOnClickListener(favoriteOnClickListener);
