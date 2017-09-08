@@ -2,15 +2,20 @@ package com.example.admin.bruinfeed;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
 
 public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
+
+    public static final String FAVORITE_PREFERENCES_NAME = "FavPrefs";
 
     private final Context mContext;
     private List<MealItem> mData;
@@ -32,11 +37,13 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
         public final TextView title;
         public final TextView description;
+        public final ImageButton favorite;
 
         public SimpleViewHolder(View view) {
             super(view);
             title = (TextView) view.findViewById(R.id.firstLine);
             description = (TextView) view.findViewById(R.id.secondLine);
+            favorite = (ImageButton) view.findViewById(R.id.favorite_indicator);
         }
     }
 
@@ -51,9 +58,8 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
     }
 
     @Override
-    public void onBindViewHolder(SimpleViewHolder holder, final int position) {
-        // - get element from dataset at this position
-        // - replace the contents of the view with that element
+    public void onBindViewHolder(final SimpleViewHolder holder, final int position) {
+        // get element from dataset at this position, and replace the contents of the view with that element
         if (mData.isEmpty()) return;
 
         if (position >= mData.size() || mData.get(position) == null) {
@@ -66,11 +72,19 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         String description = temp.getDescription();
         String descriptors = temp.getDescriptors();
 
+        final SharedPreferences favSettings = mContext.getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
+        final SharedPreferences.Editor editor = favSettings.edit();
+
+        boolean isFavorite = favSettings.getBoolean(temp.getName(), false);
+
+        if (isFavorite) {
+            holder.favorite.setImageResource(R.drawable.ic_star_black_24dp);
+        }
+
         // if meal item does not have a description, then display other useful information
         if (description.equals("No description available") && !descriptors.equals("")) {
             holder.description.setText(descriptors);
-        }
-        else {
+        } else {
             holder.description.setText(description);
         }
 
@@ -83,8 +97,23 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             }
         };
 
+        View.OnClickListener favoriteOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editor.putBoolean(temp.getName(), !favSettings.getBoolean(temp.getName(), false));
+                editor.apply();
+                if (favSettings.getBoolean(temp.getName(), false)) {
+                    holder.favorite.setImageResource(R.drawable.ic_star_black_24dp);
+                }
+                else {
+                    holder.favorite.setImageResource(R.drawable.ic_star_border_black_24dp);
+                }
+            }
+        };
+
         ((View) holder.title.getParent()).setOnClickListener(menuItemOnClickListener);
         ((View) holder.description.getParent()).setOnClickListener(menuItemOnClickListener);
+        holder.favorite.setOnClickListener(favoriteOnClickListener);
     }
 
     @Override
