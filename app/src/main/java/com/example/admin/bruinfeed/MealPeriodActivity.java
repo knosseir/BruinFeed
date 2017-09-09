@@ -303,5 +303,4 @@ public class MealPeriodActivity extends AppCompatActivity {
         super.onResume();
         mAdapter.notifyDataSetChanged();
     }
-
 }

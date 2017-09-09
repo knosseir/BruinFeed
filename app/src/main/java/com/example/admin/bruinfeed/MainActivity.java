@@ -84,6 +84,8 @@ public class MainActivity extends AppCompatActivity
         diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
 
+        toolbar.setTitleTextColor(getResources().getColor(R.color.black));
+
         recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);

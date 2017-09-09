@@ -335,7 +335,6 @@ public class DiningHallActivity extends AppCompatActivity {
         sections.clear();
         String section = "";
 
-        // TODO: RETRIEVE USING SQL QUERIES
         for (MealItem mealItem : allItems) {
             if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal)) {
                 menuItems.add(mealItem);
@@ -372,5 +371,13 @@ public class DiningHallActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // update data set in case user favorited an item
+        mAdapter.notifyDataSetChanged();
     }
 }
