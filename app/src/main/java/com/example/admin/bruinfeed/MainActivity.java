@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity
 
         public boolean getMeals(String diningHall) {
             try {
-                String[] meals = { "Breakfast", "Lunch", "Dinner" };
+                String[] meals = {"Breakfast", "Lunch", "Dinner"};
 
                 for (String meal : meals) {
                     Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall + "/" + meal).timeout(10 * 1000).get();
@@ -476,6 +476,16 @@ public class MainActivity extends AppCompatActivity
 
             ((View) holder.header.getParent()).setOnClickListener(diningHallListener);
             ((View) holder.footer.getParent()).setOnClickListener(diningHallListener);
+
+            holder.infoButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Object obj = getItemAtPosition(position);
+                    Intent diningHallInfoIntent = new Intent(getBaseContext(), DiningHallInfoActivity.class);
+                    diningHallInfoIntent.putExtra("SelectedDiningHall", obj.toString());
+                    startActivity(diningHallInfoIntent);
+                }
+            });
 
             Calendar cal = Calendar.getInstance();
             int currentHour = cal.get(Calendar.HOUR_OF_DAY);

@@ -9,6 +9,7 @@
     <string name="title_activity_meal_item">MealItemActivity</string>
     <string name="title_activity_favorites">FavoritesActivity</string>
     <string name="title_activity_meal_period">>MealPeriodActivity</string>
+    <string name="title_activity_dining_hall_info">DiningHallInfoActivity</string>
     <string name="title_breakfast">Breakfast</string>
     <string name="title_lunch">Lunch</string>
     <string name="title_dinner">Dinner</string>
@@ -69,6 +70,8 @@
 
     <string name="nf_disclaimer">*Percent Daily Values (DV) are based on a 2,000 calorie diet.</string>
 
-    <string name="no_information">No nutrition information is available about this item.</string>
+    <string name="no_information">No nutrition information is available for this item.</string>
+
+    <string name="navigation_instructions">To navigate to the selected dining hall, tap on the red marker then select the blue navigation icon in the bottom right corner.</string>
 
 </resources>

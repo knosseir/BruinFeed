@@ -235,8 +235,7 @@ public class MealItemActivity extends AppCompatActivity {
 
             }
 
-            TextView ingredAllergensTextView = (TextView) findViewById(R.id.ingred_allergen_list);
-            ingredAllergensTextView.setText(Html.fromHtml(ingredAllergensText));
+            ((TextView) findViewById(R.id.ingred_allergen_list)).setText(Html.fromHtml(ingredAllergensText));;
         }
     }
 }

@@ -12,6 +12,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
+        manifestPlaceholders = [GOOGLE_MAPS_API_KEY:"AIzaSyBzVYfrwLrWj3JI2u5x2GVtYpE3Xu25SlU"]
     }
     buildTypes {
         release {
