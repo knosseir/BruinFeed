@@ -31,6 +31,8 @@
     <string name="favorites_static_shortcut_disabled_message">Disabled</string>
 
     <string name="search_title">Search</string>
+    <string name="favorites_add">Added to favorites</string>
+    <string name="favorites_remove">Removed from favorites</string>
 
     <!-- MealItem descriptors -->
     <string name="vegan">Vegan Menu Option</string>

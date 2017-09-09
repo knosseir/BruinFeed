@@ -3,6 +3,7 @@ package com.example.admin.bruinfeed;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -102,11 +103,11 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             public void onClick(View v) {
                 selectedMealItem.setFavorite(mContext, !isFavorite);
                 if (selectedMealItem.getFavorite(mContext)) {
-                    Toast.makeText(mContext, "Added to favorites", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(v, R.string.favorites_add, Snackbar.LENGTH_SHORT).show();
                     notifyDataSetChanged();
                 }
                 else {
-                    Toast.makeText(mContext, "Removed from favorites", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(v, R.string.favorites_remove, Snackbar.LENGTH_SHORT).show();
                     notifyDataSetChanged();
                 }
             }

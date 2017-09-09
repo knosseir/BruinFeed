@@ -112,12 +112,12 @@ public class MealItemActivity extends AppCompatActivity {
                 // TODO: ONLY WORKS TWICE
 
                 if (toggleFavorite(selectedItem)) {
-                    Toast.makeText(getBaseContext(), "Added to favorites", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(findViewById(R.id.meal_item_scroll_view), R.string.favorites_add, Snackbar.LENGTH_SHORT).show();
                     item.setEnabled(true);
                     item.setIcon(R.drawable.ic_star_black_24dp);
                     favorite = true;
                 } else {
-                    Toast.makeText(getBaseContext(), "Removed from favorites", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(findViewById(R.id.meal_item_scroll_view), R.string.favorites_remove, Snackbar.LENGTH_SHORT).show();
                     item.setEnabled(false);
                     item.setIcon(R.drawable.ic_star_border_black_24dp);
                     favorite = false;
