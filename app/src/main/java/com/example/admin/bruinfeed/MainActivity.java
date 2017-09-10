@@ -1,6 +1,9 @@
 package com.example.admin.bruinfeed;
 
 import android.app.ProgressDialog;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -8,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -48,6 +52,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -95,10 +100,25 @@ public class MainActivity extends AppCompatActivity
         recyclerView.setAdapter(mAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
+        // display loading spinner on initial boot up to explain long loading time
         progress = new ProgressDialog(MainActivity.this);
         progress.setTitle("Loading...");
-        progress.setMessage("Please wait while we download data for the next week.\n(This may take up to 30 seconds and should only happen once!)");
+        progress.setMessage(getResources().getString(R.string.initial_boot_load_message));
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+
+        // create JobScheduler to download and update future meal data every 3 days
+        JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
+        builder.setPeriodic(TimeUnit.DAYS.toMillis(3))
+                .setPersisted(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setRequiresDeviceIdle(false)
+                .setRequiresCharging(false);
+
+        // builder.build() will return <= 0 if there was an issue in starting the job
+        if (scheduler.schedule(builder.build()) <= 0) {
+            Log.e(MainTag, "Job failed to start");
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
