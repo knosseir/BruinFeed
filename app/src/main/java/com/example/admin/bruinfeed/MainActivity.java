@@ -107,13 +107,14 @@ public class MainActivity extends AppCompatActivity
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
 
         // create JobScheduler to download and update future meal data every 3 days
+        // this will prevent long loading times in the future
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
         builder.setPeriodic(TimeUnit.DAYS.toMillis(3))
-                .setPersisted(true)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setRequiresDeviceIdle(false)
-                .setRequiresCharging(false);
+                .setPersisted(true)     // persist job after device reboot
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any time of network connection
+                .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
+                .setRequiresCharging(false);    // job will execute whether or not device is charging due to low CPU/RAM footprint
 
         // builder.build() will return <= 0 if there was an issue in starting the job
         if (scheduler.schedule(builder.build()) <= 0) {
@@ -189,11 +190,6 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
 
         return super.onOptionsItemSelected(item);
     }

@@ -31,7 +31,7 @@ public class JobSchedulerService extends JobService {
 
     @Override
     public boolean onStartJob(final JobParameters params) {
-        Log.e(TAG, "Job Service running");
+        Log.d(TAG, "Job Service running");
 
         // clear out old database entries to save space
         db.clear();
@@ -39,7 +39,7 @@ public class JobSchedulerService extends JobService {
         AsyncTaskRunner runner = new AsyncTaskRunner() {
             @Override
             protected void onPostExecute(Boolean success) {
-                Log.e(TAG, "Job service completed with status: " + success);
+                Log.d(TAG, "Job service completed with status: " + success);
                 jobFinished(params, !success);
             }
         };

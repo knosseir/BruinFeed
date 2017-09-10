@@ -20,8 +20,12 @@ import org.jsoup.select.Elements;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class MealItemActivity extends AppCompatActivity {
 
@@ -61,16 +65,21 @@ public class MealItemActivity extends AppCompatActivity {
         favorite = favSettings.getBoolean(selectedItem.getName(), false);
 
         setTitle(name);
+        setTitleColor(R.color.black);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
 
         // retrieve nutrition facts information asynchronously
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute(url);
 
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+
         List<MealItem> foundAtList = new ArrayList<>();
 
         for (MealItem meal : db.getAllMealItems()) {
-            if (meal.getName().equals(name)) {
+            if (meal.getName().equals(name) && meal.getDate().equals(dateString)) {
                 foundAtList.add(meal);
             }
         }
