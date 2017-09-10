@@ -65,7 +65,7 @@ public class DiningHallInfoActivity extends AppCompatActivity
         googleMap.addMarker(new MarkerOptions().position(diningHallLocation)
                 .title(selectedDiningHall));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(diningHallLocation));
-        googleMap.setMinZoomPreference(18.0f);
+        googleMap.setMinZoomPreference(17.0f);
 
         ((TextView) findViewById(R.id.dining_hall_description)).setText(selectedDiningHallDescription);
     }

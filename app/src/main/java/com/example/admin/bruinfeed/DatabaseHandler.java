@@ -155,8 +155,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return cursor.getCount();
     }
 
-    public void clear()
-    {   SQLiteDatabase db = this.getWritableDatabase();
+    public void clear() {
+        SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_MEAL_ITEMS, null, null);
+    }
+
+    public void drop() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MEAL_ITEMS);
     }
 }

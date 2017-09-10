@@ -72,14 +72,10 @@ public class MealItemActivity extends AppCompatActivity {
         AsyncTaskRunner runner = new AsyncTaskRunner();
         runner.execute(url);
 
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
-
         List<MealItem> foundAtList = new ArrayList<>();
 
         for (MealItem meal : db.getAllMealItems()) {
-            if (meal.getName().equals(name) && meal.getDate().equals(dateString)) {
+            if (meal.getName().equals(name)) {
                 foundAtList.add(meal);
             }
         }
@@ -88,7 +84,7 @@ public class MealItemActivity extends AppCompatActivity {
         String foundAtValue = "";
 
         for (MealItem meal : foundAtList) {
-            foundAtValue += meal.getHall() + " for " + meal.getMeal() + '\n';
+            foundAtValue += meal.getHall() + " for " + meal.getMeal() + " on " + meal.getDate() + '\n';
         }
 
         ((TextView) findViewById(R.id.found_at_label)).setText(foundAtLabel);

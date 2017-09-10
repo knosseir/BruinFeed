@@ -16,8 +16,12 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class MealPeriodActivity extends AppCompatActivity {
 
@@ -78,11 +82,15 @@ public class MealPeriodActivity extends AppCompatActivity {
         }
         editor.apply();
 
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+
         String diningHall = "";
 
         // TODO: ADD SECTIONS FROM EACH DINING HALL
         for (MealItem mealItem : allItems) {
-            if (mealItem.getMeal().equals(selectedMeal)) {
+            if (mealItem.getMeal().equals(selectedMeal) && mealItem.getDate().equals(dateString)) {
                 menuItems.add(mealItem);
                 if (!mealItem.getHall().equals(diningHall)) {
                     sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getHall()));
@@ -188,7 +196,7 @@ public class MealPeriodActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.search_menu, menu);
+        getMenuInflater().inflate(R.menu.search_menu_no_map, menu);
         MaterialSearchView searchView = (MaterialSearchView) findViewById(R.id.search_view);
 
         MenuItem item = menu.findItem(R.id.action_search);

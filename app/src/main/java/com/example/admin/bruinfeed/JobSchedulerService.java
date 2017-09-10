@@ -34,7 +34,7 @@ public class JobSchedulerService extends JobService {
         Log.d(TAG, "Job Service running");
 
         // clear out old database entries to save space
-        db.clear();
+        db.drop();
 
         AsyncTaskRunner runner = new AsyncTaskRunner() {
             @Override
@@ -51,7 +51,7 @@ public class JobSchedulerService extends JobService {
     public boolean onStopJob(final JobParameters params) {
         // onStopJob() is called only if system stops job before it completes
         // clear database to prevent any data corruption issues
-        db.clear();
+        db.drop();
         return false;
     }
 

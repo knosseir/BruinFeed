@@ -1,11 +1,8 @@
 package com.example.admin.bruinfeed;
 
-import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -15,15 +12,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.DatePicker;
-import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -61,6 +53,11 @@ public class DiningHallActivity extends AppCompatActivity {
     List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>();
 
     private ProgressBar activityLevelProgressBar;
+
+    Calendar calendar = Calendar.getInstance();
+    Date date = calendar.getTime();
+    String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,8 +98,7 @@ public class DiningHallActivity extends AppCompatActivity {
         clearFilters();
 
         // get current hour of day
-        Calendar cal = Calendar.getInstance();
-        int currentHour = cal.get(Calendar.HOUR_OF_DAY);
+        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
 
         // pick default meal based on time of day
         if (currentHour < 11) {
@@ -124,10 +120,12 @@ public class DiningHallActivity extends AppCompatActivity {
 
         setTitle(meal + " at " + selectedDiningHall);
 
+        String formattedDateString = new SimpleDateFormat("EEEE, MMM d", Locale.US).format(date);
+
         if (activityLevel == 0) {
             activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
         } else {
-            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "%");
+            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "% today, " + formattedDateString);
         }
         activityLevelProgressBar.setProgress(activityLevel);
 
@@ -217,11 +215,13 @@ public class DiningHallActivity extends AppCompatActivity {
         MenuItem item = menu.findItem(R.id.action_search);
         searchView.setMenuItem(item);
 
-        final MenuItem datePickerButton = menu.findItem(R.id.dining_calendar_button);
-        datePickerButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        final MenuItem mapButton = menu.findItem(R.id.dining_map_button);
+        mapButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                showPopup(findViewById(R.id.dining_toolbar));
+                Intent mapIntent = new Intent(getBaseContext(), DiningHallInfoActivity.class);
+                mapIntent.putExtra("SelectedDiningHall", selectedDiningHall);
+                startActivity(mapIntent);
                 return false;
             }
         });
@@ -351,10 +351,6 @@ public class DiningHallActivity extends AppCompatActivity {
         DatabaseHandler db = new DatabaseHandler(this);
         List<MealItem> allItems = db.getAllMealItems();
 
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
-
         menuItems.clear();
         sections.clear();
         String section = "";
@@ -386,50 +382,6 @@ public class DiningHallActivity extends AppCompatActivity {
             editor.putBoolean(descriptor, false);
         }
         editor.apply();
-    }
-
-    public void showPopup(View anchorView) {
-        View popupView = getLayoutInflater().inflate(R.layout.date_picker_popup, null);
-
-        PopupWindow popupWindow = new PopupWindow(popupView, RecyclerView.LayoutParams.WRAP_CONTENT, RecyclerView.LayoutParams.WRAP_CONTENT);
-
-        final DatePicker datePicker = (DatePicker) popupView.findViewById(R.id.date_picker);
-
-        DatePickerDialog.OnDateSetListener onDateSetListener = new DatePickerDialog.OnDateSetListener() {
-            public void onDateSet(DatePicker view, int selectedYear, int selectedMonth, int selectedDay) {
-                Log.e("date", getDateFromDatePicker(datePicker));
-                datePicker.init(selectedYear, selectedMonth, selectedDay, null);
-            }
-        };
-
-        popupWindow.setFocusable(true);
-
-        // If you need the PopupWindow to dismiss when when touched outside
-        popupWindow.setBackgroundDrawable(new ColorDrawable());
-
-        int location[] = new int[2];
-
-        // Get the View's (the one that was clicked in the Fragment) location
-        anchorView.getLocationOnScreen(location);
-
-        // Using location, the PopupWindow will be displayed right under anchorView
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER,
-                location[0], location[1] + anchorView.getHeight());
-    }
-
-    public String getDateFromDatePicker(DatePicker datePicker){
-        int day = datePicker.getDayOfMonth();
-        int month = datePicker.getMonth();
-        int year =  datePicker.getYear();
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day);
-
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-
-        datePicker.init(year, month, day, null);
-
-        return simpleDateFormat.format(calendar.getTime());
     }
 
     @Override

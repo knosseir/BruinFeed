@@ -457,32 +457,13 @@
             android:textStyle="italic" />
 
         <TextView
-            android:id="@+id/found_at_label"
+            android:id="@+id/descriptor_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/nf_disclaimer"
             android:layout_marginLeft="12dp"
             android:layout_marginRight="12dp"
             android:layout_marginTop="16dp"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/found_at_list"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/found_at_label"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp" />
-
-        <TextView
-            android:id="@+id/descriptor_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/found_at_list"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginTop="4dp"
             android:textSize="16sp"
             android:textStyle="bold"/>
 
@@ -503,6 +484,25 @@
             android:layout_marginLeft="12dp"
             android:layout_marginRight="12dp"
             android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:id="@+id/found_at_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ingred_allergen_list"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginTop="4dp"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/found_at_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/found_at_label"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp" />
 
     </RelativeLayout>
 

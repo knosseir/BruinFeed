@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity
         recyclerView.setAdapter(mAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        // display loading spinner on initial boot up to explain long loading time
+        // display loading spinner on initial boot up
         progress = new ProgressDialog(MainActivity.this);
         progress.setTitle("Loading...");
         progress.setMessage(getResources().getString(R.string.initial_boot_load_message));
@@ -134,34 +134,17 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        String dateRange = getCachedDateRange(db);
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
-
-        AsyncTaskRunner runner = new AsyncTaskRunner();
+        updateDatabase();
 
         diningHallRefresh.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
-
-        if (!dateRange.contains(currentDateString)) {
-            db.clear();
-            // show uncancellable progress bar while initial data load occurs
-            progress.show();
-            runner.execute(url, "true");
-        }
-        else {
-            runner.execute(url, "false");
-            diningHallRefresh.setRefreshing(true);
-        }
 
         // refreshes dining hall grid upon pull to refresh
         diningHallRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        // retrieve new data upon pull to refresh
-                        AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-                        asyncTaskRunner.execute(url);
+                        // determine whether or not new data must be loaded
+                        updateDatabase();
                     }
                 }
         );
@@ -220,6 +203,25 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    public void updateDatabase() {
+        String dateRange = getCachedDateRange(db);
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+
+        AsyncTaskRunner runner = new AsyncTaskRunner();
+
+        if (!dateRange.contains(currentDateString)) {
+            db.clear();
+            // show uncancellable progress bar while initial data load occurs
+            progress.show();
+            runner.execute(url, "true");
+        } else {
+            runner.execute(url, "false");
+            diningHallRefresh.setRefreshing(true);
+        }
+    }
+
     private class AsyncTaskRunner extends AsyncTask<String, String, Void> {
 
         @Override
@@ -236,6 +238,9 @@ public class MainActivity extends AppCompatActivity
 
                 if (params[1].equals("true")) {
                     Elements diningHalls = doc.select("h3");
+
+                    diningHallNames.clear();
+
                     for (Element element : diningHalls)
                         diningHallNames.add(element.ownText());
 
@@ -248,9 +253,9 @@ public class MainActivity extends AppCompatActivity
                     for (String diningHall : diningHallNames) {
                         getMeals(diningHall);
                     }
-                }
+                } else {
+                    diningHallNames.clear();
 
-                else {
                     List<MealItem> allMealItems = db.getAllMealItems();
 
                     String diningHall = "";
@@ -295,52 +300,50 @@ public class MainActivity extends AppCompatActivity
 
                 Calendar calendar = Calendar.getInstance();
 
-                for (int i = 0; i < 6; i++) {
-                    Date date = calendar.getTime();
-                    String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+                Date date = calendar.getTime();
+                String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
-                    for (String meal : meals) {
-                        Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
-                        Elements links = doc.select("a.recipeLink, li.sect-item");
+                for (String meal : meals) {
+                    Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
+                    Elements links = doc.select("a.recipeLink, li.sect-item");
 
-                        String section = "";
+                    String section = "";
 
-                        for (Element link : links) {
-                            if (link.tagName().equals("a")) {
-                                String description;
-                                String descriptors = "";
-                                Element parent = link.parent().parent();
-                                if (parent != null) {
-                                    Elements descriptionElement = parent.select("div.tt-description");
-                                    Elements descriptorElement = parent.select("div.tt-prodwebcode");
-                                    String mealUrl = link.attr("href");
-                                    if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
-                                        description = parent.select("div.tt-description").text();
-                                    } else {
-                                        description = "No description available";
-                                    }
-
-                                    if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
-                                        for (Element e : descriptorElement) {
-                                            descriptors += (e.ownText()) + ", ";
-                                        }
-                                    }
-
-                                    // remove ending comma and any leading or ending spaces
-                                    if (descriptors.length() > 0 && descriptors.charAt(descriptors.length() - 2) == ',') {
-                                        descriptors = descriptors.substring(0, descriptors.length() - 2).trim();
-                                    }
-
-                                    // add meal item to local SQLite database for future access
-                                    db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors, dateString));
+                    for (Element link : links) {
+                        if (link.tagName().equals("a")) {
+                            String description;
+                            String descriptors = "";
+                            Element parent = link.parent().parent();
+                            if (parent != null) {
+                                Elements descriptionElement = parent.select("div.tt-description");
+                                Elements descriptorElement = parent.select("div.tt-prodwebcode");
+                                String mealUrl = link.attr("href");
+                                if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
+                                    description = parent.select("div.tt-description").text();
+                                } else {
+                                    description = "No description available";
                                 }
-                            } else if (link.tagName().equals("li")) {
-                                section = link.ownText();
+
+                                if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
+                                    for (Element e : descriptorElement) {
+                                        descriptors += (e.ownText()) + ", ";
+                                    }
+                                }
+
+                                // remove ending comma and any leading or ending spaces
+                                if (descriptors.length() > 0 && descriptors.charAt(descriptors.length() - 2) == ',') {
+                                    descriptors = descriptors.substring(0, descriptors.length() - 2).trim();
+                                }
+
+                                // add meal item to local SQLite database for future access
+                                db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors, dateString));
                             }
+                        } else if (link.tagName().equals("li")) {
+                            section = link.ownText();
                         }
                     }
-                    calendar.add(Calendar.DAY_OF_YEAR, 1);
                 }
+                calendar.add(Calendar.DAY_OF_YEAR, 1);
 
             } catch (SocketTimeoutException e) {
                 Log.e(MainTag, e.toString());
@@ -468,9 +471,7 @@ public class MainActivity extends AppCompatActivity
         reloadSnackbar.setAction(R.string.retry, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                diningHallRefresh.setRefreshing(true);
-                AsyncTaskRunner asyncTaskRunner = new AsyncTaskRunner();
-                asyncTaskRunner.execute(url);
+                updateDatabase();
             }
         });
         reloadSnackbar.show();
@@ -490,7 +491,7 @@ public class MainActivity extends AppCompatActivity
                 diningHallLayout = v;
                 header = (TextView) v.findViewById(R.id.firstLine);
                 footer = (TextView) v.findViewById(R.id.secondLine);
-                infoButton = (ImageButton) v.findViewById(R.id.dining_hall_info_button);
+                infoButton = (ImageButton) v.findViewById(R.id.dining_hall_map_button);
             }
         }
 
