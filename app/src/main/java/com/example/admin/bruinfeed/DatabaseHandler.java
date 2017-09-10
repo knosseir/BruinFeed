@@ -17,7 +17,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static String DATABASE_NAME = "mealItemManager";
 
     // MealItems table name
-    private static final String TABLE_MEAL_ITEMS= "mealItems";
+    private static final String TABLE_MEAL_ITEMS = "mealItems";
 
     // MealItems Table Columns names
     private static final String KEY_NAME = "name";
@@ -69,7 +69,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_DATE, mealItem.getDate());
 
         // Insert Row
-        db.insert(TABLE_MEAL_ITEMS, null, values);
+        db.insertOrThrow(TABLE_MEAL_ITEMS, null, values);
         db.close(); // Closing database connection
     }
 
@@ -78,7 +78,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.query(TABLE_MEAL_ITEMS, null, KEY_NAME + " = ?",
-                new String[] { name }, null, null, null, null);
+                new String[]{name}, null, null, null, null);
         if (cursor != null)
             cursor.moveToFirst();
 
@@ -90,7 +90,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         List<MealItem> mealItemList = new ArrayList<>();
         // Select All Query
         String selectQuery = "SELECT * FROM " + TABLE_MEAL_ITEMS;
-
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
