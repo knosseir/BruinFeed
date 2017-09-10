@@ -6,7 +6,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class MealItem implements Parcelable, Comparable {
-    private String mName, mDescription, mUrl, mHall, mMeal, mSection, mDescriptors;
+    private String mName, mDescription, mUrl, mHall, mMeal, mSection, mDescriptors, mDate;
     boolean mFavorite;
 
     public static final String FAVORITE_PREFERENCES_NAME = "FavPrefs";
@@ -19,6 +19,7 @@ public class MealItem implements Parcelable, Comparable {
         mMeal = "Meal";
         mSection = "Section";
         mDescriptors = "Descriptors";
+        mDate = "Date";
     }
 
     public MealItem(String name, String description, String url, String hall, String meal, String section) {
@@ -31,7 +32,7 @@ public class MealItem implements Parcelable, Comparable {
         mDescriptors = "";
     }
 
-    public MealItem(String name, String description, String url, String hall, String meal, String section, String descriptors) {
+    public MealItem(String name, String description, String url, String hall, String meal, String section, String descriptors, String date) {
         mName = name;
         mDescription = description;
         mUrl = url;
@@ -39,6 +40,7 @@ public class MealItem implements Parcelable, Comparable {
         mMeal = meal;
         mSection = section;
         mDescriptors = descriptors;
+        mDate = date;
     }
 
     public MealItem(Parcel in) {
@@ -132,6 +134,10 @@ public class MealItem implements Parcelable, Comparable {
     public void addDescriptor(String descriptor) { mDescriptors += descriptor + '\n'; }
 
     public void setDescrptors(String descriptors) { mDescriptors = descriptors; }
+
+    public String getDate() { return mDate; }
+
+    public void setDate(String date) { mDate = date; }
 
     public void setFavorite(Context context, boolean favorite) {
         SharedPreferences favPrefs = context.getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);

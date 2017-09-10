@@ -501,7 +501,8 @@
             android:layout_below="@id/descriptor_list"
             android:layout_marginTop="8dp"
             android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp" />
+            android:layout_marginRight="12dp"
+            android:layout_marginBottom="12dp"/>
 
     </RelativeLayout>
 

@@ -1,5 +1,6 @@
 package com.example.admin.bruinfeed;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -44,6 +45,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,6 +68,7 @@ public class MainActivity extends AppCompatActivity
     private Map<String, Calendar> dinnerClosingHours = new HashMap<>();
 
     private SwipeRefreshLayout diningHallRefresh;
+    ProgressDialog progress;
 
     Calendar currentTime = Calendar.getInstance();
 
@@ -74,7 +77,6 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView.LayoutManager mLayoutManager;
 
     private DatabaseHandler db = new DatabaseHandler(this);
-    Snackbar loadingSnackbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +95,11 @@ public class MainActivity extends AppCompatActivity
         recyclerView.setAdapter(mAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
+        progress = new ProgressDialog(MainActivity.this);
+        progress.setTitle("Loading...");
+        progress.setMessage("Please wait while we download data for the next week.\n(This may take up to 30 seconds and should only happen once!)");
+        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
@@ -101,23 +108,32 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        loadingSnackbar = Snackbar.make(findViewById(R.id.diningHallRecyclerView), "Please wait while dining information is loaded...", Snackbar.LENGTH_INDEFINITE);
-        loadingSnackbar.show();
-
         if (!isOnline()) {
             reload(R.string.no_internet);
             return;
         }
 
-        db.clear();
+        String dateRange = getCachedDateRange(db);
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
         AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.execute(url);
 
         diningHallRefresh.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
 
+        if (!dateRange.contains(currentDateString)) {
+            db.clear();
+            // show uncancellable progress bar while initial data load occurs
+            progress.show();
+            runner.execute(url, "true");
+        }
+        else {
+            runner.execute(url, "false");
+            diningHallRefresh.setRefreshing(true);
+        }
+
         // refreshes dining hall grid upon pull to refresh
-        diningHallRefresh.setRefreshing(true);
         diningHallRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
@@ -202,18 +218,33 @@ public class MainActivity extends AppCompatActivity
                 // connect to url, set 10 second timeout in case internet connection is slow
                 Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
 
-                Elements diningHalls = doc.select("h3");
-                for (Element element : diningHalls)
-                    diningHallNames.add(element.ownText());
+                if (params[1].equals("true")) {
+                    Elements diningHalls = doc.select("h3");
+                    for (Element element : diningHalls)
+                        diningHallNames.add(element.ownText());
 
-                // remove duplicates from diningHallNames ArrayList
-                Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
-                diningHallNames.clear();
-                diningHallNames.addAll(diningHallTemp);
+                    // remove duplicates from diningHallNames ArrayList
+                    Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
+                    diningHallNames.clear();
+                    diningHallNames.addAll(diningHallTemp);
 
-                // get meals from all dining halls
-                for (String diningHall : diningHallNames) {
-                    getMeals(diningHall);
+                    // get meals from all dining halls
+                    for (String diningHall : diningHallNames) {
+                        getMeals(diningHall);
+                    }
+                }
+
+                else {
+                    List<MealItem> allMealItems = db.getAllMealItems();
+
+                    String diningHall = "";
+
+                    for (MealItem mealItem : allMealItems) {
+                        if (!mealItem.getHall().equals(diningHall)) {
+                            diningHallNames.add(mealItem.getHall());
+                            diningHall = mealItem.getHall();
+                        }
+                    }
                 }
 
                 getHours();
@@ -239,52 +270,60 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Void result) {
-            loadingSnackbar.dismiss();
+            progress.dismiss();
         }
 
         public boolean getMeals(String diningHall) {
             try {
                 String[] meals = {"Breakfast", "Lunch", "Dinner"};
 
-                for (String meal : meals) {
-                    Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall + "/" + meal).timeout(10 * 1000).get();
-                    Elements links = doc.select("a.recipeLink, li.sect-item");
+                Calendar calendar = Calendar.getInstance();
 
-                    String section = "";
+                for (int i = 0; i < 6; i++) {
+                    Date date = calendar.getTime();
+                    String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
-                    for (Element link : links) {
-                        if (link.tagName().equals("a")) {
-                            String description;
-                            String descriptors = "";
-                            Element parent = link.parent().parent();
-                            if (parent != null) {
-                                Elements descriptionElement = parent.select("div.tt-description");
-                                Elements descriptorElement = parent.select("div.tt-prodwebcode");
-                                String mealUrl = link.attr("href");
-                                if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
-                                    description = parent.select("div.tt-description").text();
-                                } else {
-                                    description = "No description available";
-                                }
+                    for (String meal : meals) {
+                        Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
+                        Elements links = doc.select("a.recipeLink, li.sect-item");
 
-                                if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
-                                    for (Element e : descriptorElement) {
-                                        descriptors += (e.ownText()) + ", ";
+                        String section = "";
+
+                        for (Element link : links) {
+                            if (link.tagName().equals("a")) {
+                                String description;
+                                String descriptors = "";
+                                Element parent = link.parent().parent();
+                                if (parent != null) {
+                                    Elements descriptionElement = parent.select("div.tt-description");
+                                    Elements descriptorElement = parent.select("div.tt-prodwebcode");
+                                    String mealUrl = link.attr("href");
+                                    if (descriptionElement.size() > 0 && descriptionElement.get(0) != null) {
+                                        description = parent.select("div.tt-description").text();
+                                    } else {
+                                        description = "No description available";
                                     }
-                                }
 
-                                // remove ending comma and any leading or ending spaces
-                                if (descriptors.length() > 0 && descriptors.charAt(descriptors.length() - 2) == ',') {
-                                    descriptors = descriptors.substring(0, descriptors.length() - 2).trim();
-                                }
+                                    if (descriptorElement.size() > 0 && descriptorElement.get(0) != null) {
+                                        for (Element e : descriptorElement) {
+                                            descriptors += (e.ownText()) + ", ";
+                                        }
+                                    }
 
-                                // add meal item to local SQLite database for future access
-                                db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors));
+                                    // remove ending comma and any leading or ending spaces
+                                    if (descriptors.length() > 0 && descriptors.charAt(descriptors.length() - 2) == ',') {
+                                        descriptors = descriptors.substring(0, descriptors.length() - 2).trim();
+                                    }
+
+                                    // add meal item to local SQLite database for future access
+                                    db.addMealItem(new MealItem(link.ownText(), description, mealUrl, diningHall, meal, section, descriptors, dateString));
+                                }
+                            } else if (link.tagName().equals("li")) {
+                                section = link.ownText();
                             }
-                        } else if (link.tagName().equals("li")) {
-                            section = link.ownText();
                         }
                     }
+                    calendar.add(Calendar.DAY_OF_YEAR, 1);
                 }
 
             } catch (SocketTimeoutException e) {
@@ -385,6 +424,18 @@ public class MainActivity extends AppCompatActivity
                 diningHallRefresh.setRefreshing(false);
             }
         });
+    }
+
+    public String getCachedDateRange(DatabaseHandler db) {
+        List<MealItem> allIMealtems = db.getAllMealItems();
+        String dateRange = "";
+
+        for (MealItem mealItem : allIMealtems) {
+            if (!dateRange.contains(mealItem.getDate())) {
+                dateRange += mealItem.getDate() + " ";
+            }
+        }
+        return dateRange;
     }
 
     public boolean isOnline() {

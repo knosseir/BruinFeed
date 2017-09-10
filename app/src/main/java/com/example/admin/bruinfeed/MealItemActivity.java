@@ -166,7 +166,7 @@ public class MealItemActivity extends AppCompatActivity {
                 }
 
                 if (ingredAllergens.length == 2) {
-                    ingredAllergensText = "<b> Ingredients: </b>" + ingredAllergens[0] + "<br />" + "<b> Allergens: </b>" + ingredAllergens[1];
+                    ingredAllergensText = "<b> Ingredients: </b>" + ingredAllergens[0] + "<br /> <br />" + "<b> Allergens: </b>" + ingredAllergens[1];
                 } else if (ingredAllergens.length == 1) {
                     ingredAllergensText = "<b> Ingredients: </b>" + ingredAllergens[0] + "<br /> <br />" + "<b> Allergens: </b> None";
                 }

@@ -1,7 +1,11 @@
 package com.example.admin.bruinfeed;
 
+import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -11,25 +15,33 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.DatePicker;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class DiningHallActivity extends AppCompatActivity {
 
     private static final String DiningHallTag = "DiningHallActivity";
     public static final String FILTER_PREFERENCES_NAME = "DiningFilterPrefs";
 
-    String url, meal;
+    String meal;
     int activityLevel = 0;
     ArrayList<MealItem> menuItems = new ArrayList<>();
     TextView activityLevelTextView;
@@ -110,7 +122,6 @@ public class DiningHallActivity extends AppCompatActivity {
         activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
         activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
 
-        url = "http://menu.dining.ucla.edu/Menus/" + selectedDiningHall + "/" + meal;
         setTitle(meal + " at " + selectedDiningHall);
 
         if (activityLevel == 0) {
@@ -205,6 +216,15 @@ public class DiningHallActivity extends AppCompatActivity {
 
         MenuItem item = menu.findItem(R.id.action_search);
         searchView.setMenuItem(item);
+
+        final MenuItem datePickerButton = menu.findItem(R.id.dining_calendar_button);
+        datePickerButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                showPopup(findViewById(R.id.dining_toolbar));
+                return false;
+            }
+        });
 
         final MenuItem filterButton = menu.findItem(R.id.dining_filter_button);
         filterButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -331,12 +351,16 @@ public class DiningHallActivity extends AppCompatActivity {
         DatabaseHandler db = new DatabaseHandler(this);
         List<MealItem> allItems = db.getAllMealItems();
 
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+
         menuItems.clear();
         sections.clear();
         String section = "";
 
         for (MealItem mealItem : allItems) {
-            if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal)) {
+            if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal) && mealItem.getDate().equals(dateString)) {
                 menuItems.add(mealItem);
                 if (!mealItem.getSection().equals(section)) {
                     sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getSection()));
@@ -362,6 +386,50 @@ public class DiningHallActivity extends AppCompatActivity {
             editor.putBoolean(descriptor, false);
         }
         editor.apply();
+    }
+
+    public void showPopup(View anchorView) {
+        View popupView = getLayoutInflater().inflate(R.layout.date_picker_popup, null);
+
+        PopupWindow popupWindow = new PopupWindow(popupView, RecyclerView.LayoutParams.WRAP_CONTENT, RecyclerView.LayoutParams.WRAP_CONTENT);
+
+        final DatePicker datePicker = (DatePicker) popupView.findViewById(R.id.date_picker);
+
+        DatePickerDialog.OnDateSetListener onDateSetListener = new DatePickerDialog.OnDateSetListener() {
+            public void onDateSet(DatePicker view, int selectedYear, int selectedMonth, int selectedDay) {
+                Log.e("date", getDateFromDatePicker(datePicker));
+                datePicker.init(selectedYear, selectedMonth, selectedDay, null);
+            }
+        };
+
+        popupWindow.setFocusable(true);
+
+        // If you need the PopupWindow to dismiss when when touched outside
+        popupWindow.setBackgroundDrawable(new ColorDrawable());
+
+        int location[] = new int[2];
+
+        // Get the View's (the one that was clicked in the Fragment) location
+        anchorView.getLocationOnScreen(location);
+
+        // Using location, the PopupWindow will be displayed right under anchorView
+        popupWindow.showAtLocation(anchorView, Gravity.CENTER,
+                location[0], location[1] + anchorView.getHeight());
+    }
+
+    public String getDateFromDatePicker(DatePicker datePicker){
+        int day = datePicker.getDayOfMonth();
+        int month = datePicker.getMonth();
+        int year =  datePicker.getYear();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, day);
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+        datePicker.init(year, month, day, null);
+
+        return simpleDateFormat.format(calendar.getTime());
     }
 
     @Override
