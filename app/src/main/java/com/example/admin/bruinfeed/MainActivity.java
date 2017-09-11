@@ -153,16 +153,16 @@ public class MainActivity extends AppCompatActivity
         progress.setMessage(getResources().getString(R.string.initial_boot_load_message));
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
 
-        // create JobScheduler to download and update future meal data every 3 days
+        // create JobScheduler to download and update future meal data every day
         // this will prevent long loading times in the future
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
         builder.setMinimumLatency(TimeUnit.HOURS.toMillis(1))   // job will happen a minimum of one hour after app has been launched
                 .setOverrideDeadline(TimeUnit.DAYS.toMillis(1)) // job will override all other requirements if it has not been run for a day
                 .setPersisted(true)     // persist job after device reboot
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any time of network connection
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any type of network connection
                 .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
-                .setRequiresCharging(false);    // job will execute whether or not device is charging due to low CPU/RAM footprint
+                .setRequiresCharging(false);   // job will execute whether or not device is charging due to low CPU/RAM footprint
 
         // builder.build() will return <= 0 if there was an issue in starting the job
         if (scheduler.schedule(builder.build()) <= 0) {
