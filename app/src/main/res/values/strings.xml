@@ -10,6 +10,7 @@
     <string name="title_activity_favorites">FavoritesActivity</string>
     <string name="title_activity_meal_period">>MealPeriodActivity</string>
     <string name="title_activity_dining_hall_info">DiningHallInfoActivity</string>
+    <string name="title_activity_intro">IntroActivity</string>
     <string name="title_breakfast">Breakfast</string>
     <string name="title_lunch">Lunch</string>
     <string name="title_dinner">Dinner</string>

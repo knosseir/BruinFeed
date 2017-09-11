@@ -37,6 +37,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-maps:11.0.2'
     compile 'com.miguelcatalan:materialsearchview:1.4.0'
     compile 'com.google.firebase:firebase-core:10.0.1'
+    compile 'com.github.apl-devs:appintro:v4.2.2'
     testCompile 'junit:junit:4.12'
 }
 
