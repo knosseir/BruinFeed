@@ -32,6 +32,8 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView.LayoutManager mLayoutManager;
 
     private DatabaseHandler db = new DatabaseHandler(this);
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +94,11 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         toolbar.setTitleTextColor(getResources().getColor(R.color.black));
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "App Open");
+        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, bundle);
 
         recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
@@ -109,7 +117,8 @@ public class MainActivity extends AppCompatActivity
         // this will prevent long loading times in the future
         JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
-        builder.setPeriodic(TimeUnit.DAYS.toMillis(3))
+        builder.setMinimumLatency(TimeUnit.HOURS.toMillis(1))   // job will happen a minimum of one hour after app has been launched
+                .setOverrideDeadline(TimeUnit.DAYS.toMillis(1)) // job will override all other requirements if it has not been run for a day
                 .setPersisted(true)     // persist job after device reboot
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any time of network connection
                 .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
@@ -144,6 +153,10 @@ public class MainActivity extends AppCompatActivity
                     public void onRefresh() {
                         // determine whether or not new data must be loaded
                         updateDatabase();
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "diningHallRefresh");
+                        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
                     }
                 }
         );
@@ -407,17 +420,14 @@ public class MainActivity extends AppCompatActivity
                             case ("Breakfast"):
                                 breakfastOpeningHours.put(diningHall, openTime);
                                 breakfastClosingHours.put(diningHall, closeTime);
-                                Log.d("Breakfast at " + diningHall, openTime.get(Calendar.HOUR_OF_DAY) + ":" + openTime.get(Calendar.MINUTE) + " to " + closeTime.get(Calendar.HOUR_OF_DAY) + ":" + closeTime.get(Calendar.MINUTE));
                                 break;
                             case ("Lunch"):
                                 lunchOpeningHours.put(diningHall, openTime);
                                 lunchClosingHours.put(diningHall, closeTime);
-                                Log.d("Lunch at " + diningHall, openTime.get(Calendar.HOUR_OF_DAY) + ":" + openTime.get(Calendar.MINUTE) + " to " + closeTime.get(Calendar.HOUR_OF_DAY) + ":" + closeTime.get(Calendar.MINUTE));
                                 break;
                             case ("Dinner"):
                                 dinnerOpeningHours.put(diningHall, openTime);
                                 dinnerClosingHours.put(diningHall, closeTime);
-                                Log.d("Dinner at " + diningHall, openTime.get(Calendar.HOUR_OF_DAY) + ":" + openTime.get(Calendar.MINUTE) + " to " + closeTime.get(Calendar.HOUR_OF_DAY) + ":" + closeTime.get(Calendar.MINUTE));
                                 break;
                             default:
                                 return false;

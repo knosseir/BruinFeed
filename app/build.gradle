@@ -12,7 +12,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
-        manifestPlaceholders = [GOOGLE_MAPS_API_KEY:"AIzaSyBzVYfrwLrWj3JI2u5x2GVtYpE3Xu25SlU"]
+        manifestPlaceholders = [GOOGLE_MAPS_API_KEY: "AIzaSyBzVYfrwLrWj3JI2u5x2GVtYpE3Xu25SlU"]
     }
     buildTypes {
         release {
@@ -36,5 +36,9 @@ dependencies {
     compile 'com.google.android.gms:play-services-location:11.0.2'
     compile 'com.google.android.gms:play-services-maps:11.0.2'
     compile 'com.miguelcatalan:materialsearchview:1.4.0'
+    compile 'com.google.firebase:firebase-core:10.0.1'
     testCompile 'junit:junit:4.12'
 }
+
+
+apply plugin: 'com.google.gms.google-services'

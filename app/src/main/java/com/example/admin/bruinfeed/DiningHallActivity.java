@@ -120,12 +120,10 @@ public class DiningHallActivity extends AppCompatActivity {
 
         setTitle(meal + " at " + selectedDiningHall);
 
-        String formattedDateString = new SimpleDateFormat("EEEE, MMM d", Locale.US).format(date);
-
         if (activityLevel == 0) {
             activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
         } else {
-            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is " + activityLevel + "% today, " + formattedDateString);
+            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently " + activityLevel + "%");
         }
         activityLevelProgressBar.setProgress(activityLevel);
 

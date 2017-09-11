@@ -3,7 +3,10 @@ package com.example.admin.bruinfeed;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.util.Log;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,17 +32,27 @@ public class JobSchedulerService extends JobService {
     private ArrayList<String> diningHallNames = new ArrayList<>();
     private DatabaseHandler db = new DatabaseHandler(this);
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public boolean onStartJob(final JobParameters params) {
         Log.d(TAG, "Job Service running");
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         // clear out old database entries to save space
-        db.drop();
+        db.clear();
 
         AsyncTaskRunner runner = new AsyncTaskRunner() {
             @Override
             protected void onPostExecute(Boolean success) {
                 Log.d(TAG, "Job service completed with status: " + success);
+                db.close();
+
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "JobScheduler");
+                bundle.putBoolean(FirebaseAnalytics.Param.ITEM_NAME, success);
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, bundle);
+
                 jobFinished(params, !success);
             }
         };
@@ -51,7 +64,7 @@ public class JobSchedulerService extends JobService {
     public boolean onStopJob(final JobParameters params) {
         // onStopJob() is called only if system stops job before it completes
         // clear database to prevent any data corruption issues
-        db.drop();
+        db.clear();
         return false;
     }
 

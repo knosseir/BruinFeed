@@ -1,11 +1,15 @@
 package com.example.admin.bruinfeed;
 
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -64,8 +68,11 @@ public class MealItemActivity extends AppCompatActivity {
 
         favorite = favSettings.getBoolean(selectedItem.getName(), false);
 
-        setTitle(name);
-        setTitleColor(R.color.black);
+
+        Spannable text = new SpannableString(name);
+        text.setSpan(new ForegroundColorSpan(Color.BLACK), 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        setTitle(text);
+
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
 
         // retrieve nutrition facts information asynchronously

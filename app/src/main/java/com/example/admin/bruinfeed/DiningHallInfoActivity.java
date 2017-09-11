@@ -1,7 +1,11 @@
 package com.example.admin.bruinfeed;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -31,7 +35,10 @@ public class DiningHallInfoActivity extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         String selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
-        setTitle(selectedDiningHall);
+
+        Spannable text = new SpannableString(selectedDiningHall);
+        text.setSpan(new ForegroundColorSpan(Color.BLACK), 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        setTitle(text);
 
         String selectedDiningHallDescription = "No information available about " + selectedDiningHall;
 
