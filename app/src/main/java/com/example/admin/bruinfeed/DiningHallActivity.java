@@ -12,6 +12,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -346,27 +347,31 @@ public class DiningHallActivity extends AppCompatActivity {
     };
 
     public void getMeals(String selectedDiningHall, String meal) {
-        DatabaseHandler db = new DatabaseHandler(this);
-        List<MealItem> allItems = db.getAllMealItems();
+        try {
+            DatabaseHandler db = new DatabaseHandler(this);
+            List<MealItem> allItems = db.getAllMealItems();
 
-        menuItems.clear();
-        sections.clear();
-        String section = "";
+            menuItems.clear();
+            sections.clear();
+            String section = "";
 
-        for (MealItem mealItem : allItems) {
-            if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal) && mealItem.getDate().equals(dateString)) {
-                menuItems.add(mealItem);
-                if (!mealItem.getSection().equals(section)) {
-                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getSection()));
-                    section = mealItem.getSection();
+            for (MealItem mealItem : allItems) {
+                if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal) && mealItem.getDate().equals(dateString)) {
+                    menuItems.add(mealItem);
+                    if (!mealItem.getSection().equals(section)) {
+                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getSection()));
+                        section = mealItem.getSection();
+                    }
                 }
             }
+
+            originalMenuItems = new ArrayList<>(menuItems);
+            originalSections = new ArrayList<>(sections);
+
+            updateRecyclerView();
+        } catch (Exception e) {
+            Log.e(DiningHallTag, e.toString());
         }
-
-        originalMenuItems = new ArrayList<>(menuItems);
-        originalSections = new ArrayList<>(sections);
-
-        updateRecyclerView();
     }
 
     public void clearFilters() {

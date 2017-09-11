@@ -9,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -55,126 +56,131 @@ public class MealPeriodActivity extends AppCompatActivity {
         mAdapter = new SimpleAdapter(getBaseContext(), menuItems);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        DatabaseHandler db = new DatabaseHandler(this);
-        allItems = db.getAllMealItems();
+        try {
 
-        vegan = getResources().getString(R.string.vegan);
-        vegetarian = getResources().getString(R.string.vegetarian);
-        no_nuts = getResources().getString(R.string.no_nuts);
-        nuts = getResources().getString(R.string.nuts);
-        no_dairy = getResources().getString(R.string.no_dairy);
-        dairy = getResources().getString(R.string.dairy);
-        no_eggs = getResources().getString(R.string.no_eggs);
-        eggs = getResources().getString(R.string.eggs);
-        no_wheat = getResources().getString(R.string.no_wheat);
-        wheat = getResources().getString(R.string.wheat);
-        no_soy = getResources().getString(R.string.no_soy);
-        soy = getResources().getString(R.string.soy);
+            DatabaseHandler db = new DatabaseHandler(this);
+            allItems = db.getAllMealItems();
 
-        SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
-        SharedPreferences.Editor editor = filters.edit();
+            vegan = getResources().getString(R.string.vegan);
+            vegetarian = getResources().getString(R.string.vegetarian);
+            no_nuts = getResources().getString(R.string.no_nuts);
+            nuts = getResources().getString(R.string.nuts);
+            no_dairy = getResources().getString(R.string.no_dairy);
+            dairy = getResources().getString(R.string.dairy);
+            no_eggs = getResources().getString(R.string.no_eggs);
+            eggs = getResources().getString(R.string.eggs);
+            no_wheat = getResources().getString(R.string.no_wheat);
+            wheat = getResources().getString(R.string.wheat);
+            no_soy = getResources().getString(R.string.no_soy);
+            soy = getResources().getString(R.string.soy);
 
-        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy };
+            SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
+            SharedPreferences.Editor editor = filters.edit();
 
-        // uncheck all filters by default
-        for (String descriptor : mealDescriptorArray) {
-            editor.putBoolean(descriptor, false);
-        }
-        editor.apply();
+            String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy};
 
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+            // uncheck all filters by default
+            for (String descriptor : mealDescriptorArray) {
+                editor.putBoolean(descriptor, false);
+            }
+            editor.apply();
 
-        String diningHall = "";
+            Calendar calendar = Calendar.getInstance();
+            Date date = calendar.getTime();
+            String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
-        // TODO: ADD SECTIONS FROM EACH DINING HALL
-        for (MealItem mealItem : allItems) {
-            if (mealItem.getMeal().equals(selectedMeal) && mealItem.getDate().equals(dateString)) {
-                menuItems.add(mealItem);
-                if (!mealItem.getHall().equals(diningHall)) {
-                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getHall()));
-                    diningHall = mealItem.getHall();
+            String diningHall = "";
+
+            // TODO: ADD SECTIONS FROM EACH DINING HALL
+            for (MealItem mealItem : allItems) {
+                if (mealItem.getMeal().equals(selectedMeal) && mealItem.getDate().equals(dateString)) {
+                    menuItems.add(mealItem);
+                    if (!mealItem.getHall().equals(diningHall)) {
+                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getHall()));
+                        diningHall = mealItem.getHall();
+                    }
                 }
             }
-        }
 
-        originalMenuItems = new ArrayList<>(menuItems);
-        originalSections = new ArrayList<>(sections);
+            originalMenuItems = new ArrayList<>(menuItems);
+            originalSections = new ArrayList<>(sections);
 
-        updateRecyclerView();
+            updateRecyclerView();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+            setSupportActionBar(toolbar);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        searchView = (MaterialSearchView) findViewById(R.id.search_view);
-        searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                onQueryTextChange(query);
+            searchView = (MaterialSearchView) findViewById(R.id.search_view);
+            searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    onQueryTextChange(query);
 
-                // hide keyboard after search is submitted and results are displayed
-                View view = getCurrentFocus();
-                if (view != null) {
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    // hide keyboard after search is submitted and results are displayed
+                    View view = getCurrentFocus();
+                    if (view != null) {
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+
+                    return true;
                 }
 
-                return true;
-            }
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    // if search query is blank, reset results and show all meal items and sections
+                    if (newText.equals("")) {
+                        menuItems.clear();
+                        menuItems.addAll(originalMenuItems);
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                // if search query is blank, reset results and show all meal items and sections
-                if (newText.equals("")) {
+                        sections.clear();
+                        sections.addAll(originalSections);
+
+                        updateRecyclerView();
+
+                        return true;
+                    }
+
+                    List<MealItem> queryItems = new ArrayList<>();
+                    String section = "";
+
                     menuItems.clear();
-                    menuItems.addAll(originalMenuItems);
-
                     sections.clear();
-                    sections.addAll(originalSections);
+
+                    for (MealItem mealItem : originalMenuItems) {
+                        if (mealItem.getName().toLowerCase().contains(newText.toLowerCase())) {
+                            queryItems.add(mealItem);
+                            if (!mealItem.getHall().equals(section)) {
+                                sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getHall()));
+                                section = mealItem.getHall();
+                            }
+                        }
+                    }
+
+                    menuItems.addAll(queryItems);
 
                     updateRecyclerView();
 
                     return true;
                 }
+            });
 
-                List<MealItem> queryItems = new ArrayList<>();
-                String section = "";
-
-                menuItems.clear();
-                sections.clear();
-
-                for (MealItem mealItem : originalMenuItems) {
-                    if (mealItem.getName().toLowerCase().contains(newText.toLowerCase())) {
-                        queryItems.add(mealItem);
-                        if (!mealItem.getHall().equals(section)) {
-                            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getHall()));
-                            section = mealItem.getHall();
-                        }
-                    }
+            searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
+                @Override
+                public void onSearchViewShown() {
                 }
 
-                menuItems.addAll(queryItems);
-
-                updateRecyclerView();
-
-                return true;
-            }
-        });
-
-        searchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
-            @Override
-            public void onSearchViewShown() {
-            }
-
-            @Override
-            public void onSearchViewClosed() {
-            }
-        });
+                @Override
+                public void onSearchViewClosed() {
+                }
+            });
+        } catch (Exception e) {
+            Log.e("MealPeriodActivity", e.toString());
+        }
     }
 
     public void updateRecyclerView() {

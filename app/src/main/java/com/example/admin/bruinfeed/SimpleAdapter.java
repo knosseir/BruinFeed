@@ -93,6 +93,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             public void onClick(View v) {
                 Intent mealItemIntent = new Intent(mContext, MealItemActivity.class);
                 mealItemIntent.putExtra("MealItem", selectedMealItem);
+                mealItemIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 mContext.startActivity(mealItemIntent);
             }
         };

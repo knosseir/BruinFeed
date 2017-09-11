@@ -53,54 +53,58 @@ public class MealItemActivity extends AppCompatActivity {
 
         db = new DatabaseHandler(this);
 
-        // retrieve information about the selected meal item
-        selectedItem = getIntent().getParcelableExtra("MealItem");
-        name = selectedItem.getName();
-        description = selectedItem.getDescription();
-        url = selectedItem.getUrl();
-        hall = selectedItem.getHall();
-        meal = selectedItem.getMeal();
-        section = selectedItem.getSection();
-        descriptors = selectedItem.getDescriptors();
+        try {
 
-        favSettings = getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
-        editor = favSettings.edit();
+            // retrieve information about the selected meal item
+            selectedItem = getIntent().getParcelableExtra("MealItem");
+            name = selectedItem.getName();
+            description = selectedItem.getDescription();
+            url = selectedItem.getUrl();
+            hall = selectedItem.getHall();
+            meal = selectedItem.getMeal();
+            section = selectedItem.getSection();
+            descriptors = selectedItem.getDescriptors();
 
-        favorite = favSettings.getBoolean(selectedItem.getName(), false);
+            favSettings = getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
+            editor = favSettings.edit();
 
+            favorite = favSettings.getBoolean(selectedItem.getName(), false);
 
-        Spannable text = new SpannableString(name);
-        text.setSpan(new ForegroundColorSpan(Color.BLACK), 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-        setTitle(text);
+            Spannable text = new SpannableString(name);
+            text.setSpan(new ForegroundColorSpan(Color.BLACK), 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+            setTitle(text);
 
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
 
-        // retrieve nutrition facts information asynchronously
-        AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.execute(url);
+            // retrieve nutrition facts information asynchronously
+            AsyncTaskRunner runner = new AsyncTaskRunner();
+            runner.execute(url);
 
-        List<MealItem> foundAtList = new ArrayList<>();
+            List<MealItem> foundAtList = new ArrayList<>();
 
-        for (MealItem meal : db.getAllMealItems()) {
-            if (meal.getName().equals(name)) {
-                foundAtList.add(meal);
+            for (MealItem meal : db.getAllMealItems()) {
+                if (meal.getName().equals(name)) {
+                    foundAtList.add(meal);
+                }
             }
+
+            String foundAtLabel = name + " can be found at: ";
+            String foundAtValue = "";
+
+            for (MealItem meal : foundAtList) {
+                foundAtValue += meal.getHall() + " for " + meal.getMeal() + " on " + meal.getDate() + '\n';
+            }
+
+            ((TextView) findViewById(R.id.found_at_label)).setText(foundAtLabel);
+            ((TextView) findViewById(R.id.found_at_list)).setText(foundAtValue);
+
+            String descriptorText = "More information about " + name + ":";
+
+            ((TextView) findViewById(R.id.descriptor_label)).setText(descriptorText);
+            ((TextView) findViewById(R.id.descriptor_list)).setText(descriptors);
+        } catch (Exception e) {
+            Log.e(MealItemTag, e.toString());
         }
-
-        String foundAtLabel = name + " can be found at: ";
-        String foundAtValue = "";
-
-        for (MealItem meal : foundAtList) {
-            foundAtValue += meal.getHall() + " for " + meal.getMeal() + " on " + meal.getDate() + '\n';
-        }
-
-        ((TextView) findViewById(R.id.found_at_label)).setText(foundAtLabel);
-        ((TextView) findViewById(R.id.found_at_list)).setText(foundAtValue);
-
-        String descriptorText = "More information about " + name + ":";
-
-        ((TextView) findViewById(R.id.descriptor_label)).setText(descriptorText);
-        ((TextView) findViewById(R.id.descriptor_list)).setText(descriptors);
     }
 
     @Override
@@ -193,61 +197,65 @@ public class MealItemActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String ingredAllergensText) {
+            try {
 
-            if (ingredAllergensText == null) return;
+                if (ingredAllergensText == null) return;
 
-            ((TextView) findViewById(R.id.serving_size_value)).setText(servingSize.ownText().substring(servingSize.ownText().lastIndexOf(" ") + 1));
-            ((TextView) findViewById(R.id.calories_value)).setText(calories.ownText().substring(calories.ownText().lastIndexOf(" ") + 1));
-            ((TextView) findViewById(R.id.fat_calories_value)).setText(caloriesFromFat.ownText().substring(caloriesFromFat.ownText().lastIndexOf(" ") + 1));
+                ((TextView) findViewById(R.id.serving_size_value)).setText(servingSize.ownText().substring(servingSize.ownText().lastIndexOf(" ") + 1));
+                ((TextView) findViewById(R.id.calories_value)).setText(calories.ownText().substring(calories.ownText().lastIndexOf(" ") + 1));
+                ((TextView) findViewById(R.id.fat_calories_value)).setText(caloriesFromFat.ownText().substring(caloriesFromFat.ownText().lastIndexOf(" ") + 1));
 
-            for (Element element : nutritionFactElements.select("p.nfnutrient")) {
-                if (element.ownText().contains("Calories")) {
-                    ((TextView) findViewById(R.id.calories_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                } else if (element.text().contains("Total Fat")) {
-                    ((TextView) findViewById(R.id.total_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                    ((TextView) findViewById(R.id.total_fat_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
-                } else if (element.ownText().contains("Saturated Fat")) {
-                    ((TextView) findViewById(R.id.saturated_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                    ((TextView) findViewById(R.id.saturated_fat_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
-                } else if (element.ownText().contains("Trans Fat")) {
-                    ((TextView) findViewById(R.id.trans_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                } else if (element.text().contains("Cholesterol")) {
-                    ((TextView) findViewById(R.id.cholesterol_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                    ((TextView) findViewById(R.id.cholesterol_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
-                } else if (element.text().contains("Sodium")) {
-                    ((TextView) findViewById(R.id.sodium_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                    ((TextView) findViewById(R.id.sodium_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
-                } else if (element.text().contains("Total Carbohydrate")) {
-                    ((TextView) findViewById(R.id.total_carbohydrate_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                    ((TextView) findViewById(R.id.total_carbohydrate_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
-                } else if (element.ownText().contains("Dietary Fiber")) {
-                    ((TextView) findViewById(R.id.dietary_fiber_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                    ((TextView) findViewById(R.id.dietary_fiber_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
-                } else if (element.ownText().contains("Sugars")) {
-                    ((TextView) findViewById(R.id.sugars_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
-                } else if (element.text().contains("Protein")) {
-                    ((TextView) findViewById(R.id.protein_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                for (Element element : nutritionFactElements.select("p.nfnutrient")) {
+                    if (element.ownText().contains("Calories")) {
+                        ((TextView) findViewById(R.id.calories_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                    } else if (element.text().contains("Total Fat")) {
+                        ((TextView) findViewById(R.id.total_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                        ((TextView) findViewById(R.id.total_fat_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
+                    } else if (element.ownText().contains("Saturated Fat")) {
+                        ((TextView) findViewById(R.id.saturated_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                        ((TextView) findViewById(R.id.saturated_fat_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
+                    } else if (element.ownText().contains("Trans Fat")) {
+                        ((TextView) findViewById(R.id.trans_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                    } else if (element.text().contains("Cholesterol")) {
+                        ((TextView) findViewById(R.id.cholesterol_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                        ((TextView) findViewById(R.id.cholesterol_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
+                    } else if (element.text().contains("Sodium")) {
+                        ((TextView) findViewById(R.id.sodium_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                        ((TextView) findViewById(R.id.sodium_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
+                    } else if (element.text().contains("Total Carbohydrate")) {
+                        ((TextView) findViewById(R.id.total_carbohydrate_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                        ((TextView) findViewById(R.id.total_carbohydrate_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
+                    } else if (element.ownText().contains("Dietary Fiber")) {
+                        ((TextView) findViewById(R.id.dietary_fiber_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                        ((TextView) findViewById(R.id.dietary_fiber_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
+                    } else if (element.ownText().contains("Sugars")) {
+                        ((TextView) findViewById(R.id.sugars_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                    } else if (element.text().contains("Protein")) {
+                        ((TextView) findViewById(R.id.protein_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
+                    }
                 }
+
+                for (Element element : nutritionFactElements.select("div.nfvit")) {
+                    Element left = element.select("span.nfvitleft").first();
+                    Element right = element.select("span.nfvitright").first();
+
+                    if (left.text().contains("Vitamin A")) {
+                        ((TextView) findViewById(R.id.vitamin_a_value)).setText(left.select("span.nfvitpct").first().ownText());
+                    } else if (left.text().contains("Calcium")) {
+                        ((TextView) findViewById(R.id.calcium_value)).setText(left.select("span.nfvitpct").first().ownText());
+                    }
+                    if (right.text().contains("Vitamin C")) {
+                        ((TextView) findViewById(R.id.vitamin_c_value)).setText(right.select("span.nfvitpct").first().ownText());
+                    } else if (right.text().contains("Iron")) {
+                        ((TextView) findViewById(R.id.iron_value)).setText(right.select("span.nfvitpct").first().ownText());
+                    }
+
+                }
+
+                ((TextView) findViewById(R.id.ingred_allergen_list)).setText(Html.fromHtml(ingredAllergensText));
+            } catch (Exception e) {
+                Log.e(MealItemTag, e.toString());
             }
-
-            for (Element element : nutritionFactElements.select("div.nfvit")) {
-                Element left = element.select("span.nfvitleft").first();
-                Element right = element.select("span.nfvitright").first();
-
-                if (left.text().contains("Vitamin A")) {
-                    ((TextView) findViewById(R.id.vitamin_a_value)).setText(left.select("span.nfvitpct").first().ownText());
-                } else if (left.text().contains("Calcium")) {
-                    ((TextView) findViewById(R.id.calcium_value)).setText(left.select("span.nfvitpct").first().ownText());
-                }
-                if (right.text().contains("Vitamin C")) {
-                    ((TextView) findViewById(R.id.vitamin_c_value)).setText(right.select("span.nfvitpct").first().ownText());
-                } else if (right.text().contains("Iron")) {
-                    ((TextView) findViewById(R.id.iron_value)).setText(right.select("span.nfvitpct").first().ownText());
-                }
-
-            }
-
-            ((TextView) findViewById(R.id.ingred_allergen_list)).setText(Html.fromHtml(ingredAllergensText));;
         }
     }
 }
