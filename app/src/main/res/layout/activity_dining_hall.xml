@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.admin.bruinfeed.DiningHallActivity">
+    tools:context="com.knosseir.admin.bruinfeed.DiningHallActivity">
 
     <FrameLayout
         android:id="@+id/dining_toolbar_container"

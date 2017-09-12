@@ -9,11 +9,11 @@
         android:shortcutShortLabel="@string/favorites_static_shortcut_short_label">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.example.admin.bruinfeed.MainActivity"
-            android.targetPackage="com.example.admin.bruinfeed"/>
+            android:targetClass="com.knosseir.admin.bruinfeed.MainActivity"
+            android.targetPackage="com.knosseir.admin.bruinfeed"/>
         <intent
             android:action="android.intent.action.MAIN"
-            android:targetClass="com.example.admin.bruinfeed.FavoritesActivity"
-            android:targetPackage="com.example.admin.bruinfeed" />
+            android:targetClass="com.knosseir.admin.bruinfeed.FavoritesActivity"
+            android:targetPackage="com.knosseir.admin.bruinfeed" />
     </shortcut>
 </shortcuts>

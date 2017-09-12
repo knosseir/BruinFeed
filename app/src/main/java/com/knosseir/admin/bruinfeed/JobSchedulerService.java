@@ -1,4 +1,4 @@
-package com.example.admin.bruinfeed;
+package com.knosseir.admin.bruinfeed;
 
 import android.app.job.JobParameters;
 import android.app.job.JobService;

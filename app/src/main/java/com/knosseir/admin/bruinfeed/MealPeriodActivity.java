@@ -1,11 +1,8 @@
-package com.example.admin.bruinfeed;
+package com.knosseir.admin.bruinfeed;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,8 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
@@ -29,59 +24,40 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class DiningHallActivity extends AppCompatActivity {
+public class MealPeriodActivity extends AppCompatActivity {
 
-    private static final String DiningHallTag = "DiningHallActivity";
-    public static final String FILTER_PREFERENCES_NAME = "DiningFilterPrefs";
+    public static final String FILTER_PREFERENCES_NAME = "FilterPrefs";
 
-    String meal;
-    int activityLevel = 0;
-    ArrayList<MealItem> menuItems = new ArrayList<>();
-    TextView activityLevelTextView;
-
-    String selectedDiningHall;
-    MaterialSearchView searchView;
+    String selectedMeal;
+    List<SimpleSectionedRecyclerViewAdapter.Section> sections = new ArrayList<>();
+    List<MealItem> menuItems = new ArrayList<>();
+    List<MealItem> allItems = new ArrayList<>();
+    List<MealItem> originalMenuItems = new ArrayList<>();
+    List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>();
 
     String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy;
 
     private RecyclerView recyclerView;
     private SimpleAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    List<SimpleSectionedRecyclerViewAdapter.Section> sections = new ArrayList<>();
     SimpleSectionedRecyclerViewAdapter mSectionedAdapter;
-
-    List<MealItem> originalMenuItems = new ArrayList<>();
-    List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>();
-
-    private ProgressBar activityLevelProgressBar;
-
-    Calendar calendar = Calendar.getInstance();
-    Date date = calendar.getTime();
-    String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
-
+    MaterialSearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dining_hall);
+        setContentView(R.layout.activity_meal_period);
+        selectedMeal = getIntent().getStringExtra("selectedMeal");
+        setTitle(selectedMeal);
 
-        recyclerView = (RecyclerView) findViewById(R.id.menuRecyclerView);
+        recyclerView = (RecyclerView) findViewById(R.id.mealListRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new SimpleAdapter(getBaseContext(), menuItems);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
-        activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.dining_toolbar);
-        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
-
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        DatabaseHandler db = new DatabaseHandler(this);
+        allItems = db.getAllMealItems();
 
         vegan = getResources().getString(R.string.vegan);
         vegetarian = getResources().getString(R.string.vegetarian);
@@ -96,41 +72,47 @@ public class DiningHallActivity extends AppCompatActivity {
         no_soy = getResources().getString(R.string.no_soy);
         soy = getResources().getString(R.string.soy);
 
-        clearFilters();
+        SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
+        SharedPreferences.Editor editor = filters.edit();
 
-        // get current hour of day
-        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy};
 
-        // pick default meal based on time of day
-        if (currentHour < 11) {
-            navigation.setSelectedItemId(R.id.bottom_breakfast_button);
-            meal = "Breakfast";
-        } else if (currentHour < 17) {
-            navigation.setSelectedItemId(R.id.bottom_lunch_button);
-            meal = "Lunch";
-        } else {
-            navigation.setSelectedItemId(R.id.bottom_dinner_button);
-            meal = "Dinner";
+        // uncheck all filters by default
+        for (String descriptor : mealDescriptorArray) {
+            editor.putBoolean(descriptor, false);
+        }
+        editor.apply();
+
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+
+        String diningHall = "";
+
+        // TODO: ADD SECTIONS FROM EACH DINING HALL
+        for (MealItem mealItem : allItems) {
+            if (mealItem.getMeal().equals(selectedMeal) && mealItem.getDate().equals(dateString)) {
+                menuItems.add(mealItem);
+                if (!mealItem.getHall().equals(diningHall)) {
+                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getHall()));
+                    diningHall = mealItem.getHall();
+                }
+            }
         }
 
-        // TODO: CHOOSE MEAL BASED ON DINING PERIODS FOR EACH DINING HALL
+        originalMenuItems = new ArrayList<>(menuItems);
+        originalSections = new ArrayList<>(sections);
 
-        selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
-        activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
-        activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
+        updateRecyclerView();
 
-        setTitle(meal + " at " + selectedDiningHall);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
-        if (activityLevel == 0) {
-            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
-        } else {
-            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently " + activityLevel + "%");
-        }
-        activityLevelProgressBar.setProgress(activityLevel);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        getMeals(selectedDiningHall, meal);
-
-        searchView = (MaterialSearchView) findViewById(R.id.dining_search_view);
+        searchView = (MaterialSearchView) findViewById(R.id.search_view);
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -170,9 +152,9 @@ public class DiningHallActivity extends AppCompatActivity {
                 for (MealItem mealItem : originalMenuItems) {
                     if (mealItem.getName().toLowerCase().contains(newText.toLowerCase())) {
                         queryItems.add(mealItem);
-                        if (!mealItem.getSection().equals(section)) {
-                            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getSection()));
-                            section = mealItem.getSection();
+                        if (!mealItem.getHall().equals(section)) {
+                            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(queryItems.size() - 1, mealItem.getHall()));
+                            section = mealItem.getHall();
                         }
                     }
                 }
@@ -208,28 +190,24 @@ public class DiningHallActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.search_menu, menu);
+        getMenuInflater().inflate(R.menu.search_menu_no_map, menu);
+        MaterialSearchView searchView = (MaterialSearchView) findViewById(R.id.search_view);
 
         MenuItem item = menu.findItem(R.id.action_search);
         searchView.setMenuItem(item);
-
-        final MenuItem mapButton = menu.findItem(R.id.dining_map_button);
-        mapButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent mapIntent = new Intent(getBaseContext(), DiningHallInfoActivity.class);
-                mapIntent.putExtra("SelectedDiningHall", selectedDiningHall);
-                startActivity(mapIntent);
-                return false;
-            }
-        });
 
         final MenuItem filterButton = menu.findItem(R.id.dining_filter_button);
         filterButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                PopupMenu filterPopup = new PopupMenu(DiningHallActivity.this, findViewById(R.id.dining_filter_button));
+                PopupMenu filterPopup = new PopupMenu(MealPeriodActivity.this, findViewById(R.id.dining_filter_button));
                 filterPopup.getMenuInflater().inflate(R.menu.filter_popup, filterPopup.getMenu());
 
                 SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
@@ -259,7 +237,6 @@ public class DiningHallActivity extends AppCompatActivity {
                 return true;
             }
         });
-
 
         return true;
     }
@@ -310,81 +287,15 @@ public class DiningHallActivity extends AppCompatActivity {
 
         if (menuItems.size() > 0) {
             // update sections after items have been filtered out
-            String section = "";
+            String hall = "";
             for (int i = 0; i < menuItems.size(); i++) {
                 MealItem mealItem = menuItems.get(i);
-                if (!mealItem.getSection().equals(section)) {
-                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(i, mealItem.getSection()));
-                    section = mealItem.getSection();
+                if (!mealItem.getHall().equals(hall)) {
+                    sections.add(new SimpleSectionedRecyclerViewAdapter.Section(i, mealItem.getHall()));
+                    hall = mealItem.getHall();
                 }
             }
         }
-    }
-
-
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.bottom_breakfast_button:
-                    getMeals(selectedDiningHall, "Breakfast");
-                    break;
-                case R.id.bottom_lunch_button:
-                    getMeals(selectedDiningHall, "Lunch");
-                    break;
-                case R.id.bottom_dinner_button:
-                    getMeals(selectedDiningHall, "Dinner");
-                    break;
-            }
-
-            clearFilters();
-
-            return true;
-        }
-
-    };
-
-    public void getMeals(String selectedDiningHall, String meal) {
-        try {
-            DatabaseHandler db = new DatabaseHandler(this);
-            List<MealItem> allItems = db.getAllMealItems();
-
-            menuItems.clear();
-            sections.clear();
-            String section = "";
-
-            for (MealItem mealItem : allItems) {
-                if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal) && mealItem.getDate().equals(dateString)) {
-                    menuItems.add(mealItem);
-                    if (!mealItem.getSection().equals(section)) {
-                        sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getSection()));
-                        section = mealItem.getSection();
-                    }
-                }
-            }
-
-            originalMenuItems = new ArrayList<>(menuItems);
-            originalSections = new ArrayList<>(sections);
-
-            updateRecyclerView();
-        } catch (Exception e) {
-            Log.e(DiningHallTag, e.toString());
-        }
-    }
-
-    public void clearFilters() {
-        SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
-        SharedPreferences.Editor editor = filters.edit();
-
-        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy };
-
-        // uncheck all filters by default
-        for (String descriptor : mealDescriptorArray) {
-            editor.putBoolean(descriptor, false);
-        }
-        editor.apply();
     }
 
     @Override
@@ -399,8 +310,6 @@ public class DiningHallActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-
-        // update data set in case user favorited an item
         mAdapter.notifyDataSetChanged();
     }
 }

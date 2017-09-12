@@ -1,4 +1,4 @@
-package com.example.admin.bruinfeed;
+package com.knosseir.admin.bruinfeed;
 
 import android.content.Context;
 import android.content.SharedPreferences;

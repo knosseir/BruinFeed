@@ -1,4 +1,4 @@
-package com.example.admin.bruinfeed;
+package com.knosseir.admin.bruinfeed;
 
 import android.app.ProgressDialog;
 import android.app.job.JobInfo;
@@ -38,6 +38,7 @@ import com.crashlytics.android.Crashlytics;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import io.fabric.sdk.android.Fabric;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -98,117 +99,112 @@ public class MainActivity extends AppCompatActivity
         diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
 
-        try {
+        //  Declare a new thread to do a preference check
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //  Initialize SharedPreferences
+                SharedPreferences getPrefs = PreferenceManager
+                        .getDefaultSharedPreferences(getBaseContext());
 
-            //  Declare a new thread to do a preference check
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    //  Initialize SharedPreferences
-                    SharedPreferences getPrefs = PreferenceManager
-                            .getDefaultSharedPreferences(getBaseContext());
+                //  Create a new boolean and preference and set it to true
+                boolean isFirstStart = getPrefs.getBoolean("firstStart", true);
 
-                    //  Create a new boolean and preference and set it to true
-                    boolean isFirstStart = getPrefs.getBoolean("firstStart", true);
+                //  If the activity has never started before...
+                if (isFirstStart) {
 
-                    //  If the activity has never started before...
-                    if (isFirstStart) {
+                    //  Launch app intro
+                    final Intent i = new Intent(MainActivity.this, IntroActivity.class);
 
-                        //  Launch app intro
-                        final Intent i = new Intent(MainActivity.this, IntroActivity.class);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            startActivity(i);
+                        }
+                    });
 
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                startActivity(i);
-                            }
-                        });
+                    //  Make a new preferences editor
+                    SharedPreferences.Editor e = getPrefs.edit();
 
-                        //  Make a new preferences editor
-                        SharedPreferences.Editor e = getPrefs.edit();
+                    //  Edit preference to make it false because we don't want this to run again
+                    e.putBoolean("firstStart", false);
 
-                        //  Edit preference to make it false because we don't want this to run again
-                        e.putBoolean("firstStart", false);
+                    //  Apply changes
+                    e.apply();
+                }
+            }
+        });
 
-                        //  Apply changes
-                        e.apply();
+        // Start the thread
+        t.start();
+
+        toolbar.setTitleTextColor(getResources().getColor(R.color.black));
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "App Open");
+        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, bundle);
+
+        recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
+        mLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new DiningHallAdapter(diningHallNames);
+        recyclerView.setAdapter(mAdapter);
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+
+        // display loading spinner on initial boot up
+        progress = new ProgressDialog(MainActivity.this);
+        progress.setTitle("Loading...");
+        progress.setMessage(getResources().getString(R.string.initial_boot_load_message));
+        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+
+        // create JobScheduler to download and update future meal data every day
+        // this will prevent long loading times in the future
+        JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
+        builder.setMinimumLatency(TimeUnit.HOURS.toMillis(1))   // job will happen a minimum of one hour after app has been launched
+                .setOverrideDeadline(TimeUnit.DAYS.toMillis(1)) // job will override all other requirements if it has not been run for a day
+                .setPersisted(true)     // persist job after device reboot
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any type of network connection
+                .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
+                .setRequiresCharging(false);   // job will execute whether or not device is charging due to low CPU/RAM footprint
+
+        // builder.build() will return <= 0 if there was an issue in starting the job
+        if (scheduler.schedule(builder.build()) <= 0) {
+            Log.e(MainTag, "Job failed to start");
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        if (!isOnline()) {
+            reload(R.string.no_internet);
+            return;
+        }
+
+        updateDatabase();
+
+        diningHallRefresh.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
+
+        // refreshes dining hall grid upon pull to refresh
+        diningHallRefresh.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        // determine whether or not new data must be loaded
+                        updateDatabase();
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "diningHallRefresh");
+                        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
                     }
                 }
-            });
-
-            // Start the thread
-            t.start();
-
-            toolbar.setTitleTextColor(getResources().getColor(R.color.black));
-
-            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
-            Bundle bundle = new Bundle();
-            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "App Open");
-            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, bundle);
-
-            recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
-            mLayoutManager = new LinearLayoutManager(this);
-            recyclerView.setLayoutManager(mLayoutManager);
-            mAdapter = new DiningHallAdapter(diningHallNames);
-            recyclerView.setAdapter(mAdapter);
-            recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
-
-            // display loading spinner on initial boot up
-            progress = new ProgressDialog(MainActivity.this);
-            progress.setTitle("Loading...");
-            progress.setMessage(getResources().getString(R.string.initial_boot_load_message));
-            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-
-            // create JobScheduler to download and update future meal data every day
-            // this will prevent long loading times in the future
-            JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-            JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
-            builder.setMinimumLatency(TimeUnit.HOURS.toMillis(1))   // job will happen a minimum of one hour after app has been launched
-                    .setOverrideDeadline(TimeUnit.DAYS.toMillis(1)) // job will override all other requirements if it has not been run for a day
-                    .setPersisted(true)     // persist job after device reboot
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any type of network connection
-                    .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
-                    .setRequiresCharging(false);   // job will execute whether or not device is charging due to low CPU/RAM footprint
-
-            // builder.build() will return <= 0 if there was an issue in starting the job
-            if (scheduler.schedule(builder.build()) <= 0) {
-                Log.e(MainTag, "Job failed to start");
-            }
-
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-            drawer.setDrawerListener(toggle);
-            toggle.syncState();
-
-            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-            navigationView.setNavigationItemSelectedListener(this);
-
-            if (!isOnline()) {
-                reload(R.string.no_internet);
-                return;
-            }
-
-            updateDatabase();
-
-            diningHallRefresh.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
-
-            // refreshes dining hall grid upon pull to refresh
-            diningHallRefresh.setOnRefreshListener(
-                    new SwipeRefreshLayout.OnRefreshListener() {
-                        @Override
-                        public void onRefresh() {
-                            // determine whether or not new data must be loaded
-                            updateDatabase();
-
-                            Bundle bundle = new Bundle();
-                            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "diningHallRefresh");
-                            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
-                        }
-                    }
-            );
-        } catch (Exception e) {
-            Log.e(MainTag, e.toString());
-        }
+        );
     }
 
     @Override
@@ -265,25 +261,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void updateDatabase() {
-        try {
-            String dateRange = getCachedDateRange(db);
-            Calendar calendar = Calendar.getInstance();
-            Date date = calendar.getTime();
-            String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+        String dateRange = getCachedDateRange(db);
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
-            AsyncTaskRunner runner = new AsyncTaskRunner();
+        AsyncTaskRunner runner = new AsyncTaskRunner();
 
-            if (!dateRange.contains(currentDateString)) {
-                db.clear();
-                // show uncancellable progress bar while initial data load occurs
-                progress.show();
-                runner.execute(url, "true");
-            } else {
-                runner.execute(url, "false");
-                diningHallRefresh.setRefreshing(true);
-            }
-        } catch (Exception e) {
-            Log.e(MainTag, e.toString());
+        if (!dateRange.contains(currentDateString)) {
+            db.clear();
+            // show uncancellable progress bar while initial data load occurs
+            progress.show();
+            runner.execute(url, "true");
+        } else {
+            runner.execute(url, "false");
+            diningHallRefresh.setRefreshing(true);
         }
     }
 

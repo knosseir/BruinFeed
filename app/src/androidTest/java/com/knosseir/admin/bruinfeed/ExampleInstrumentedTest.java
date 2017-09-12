@@ -1,4 +1,4 @@
-package com.example.admin.bruinfeed;
+package com.knosseir.admin.bruinfeed;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.admin.bruinfeed", appContext.getPackageName());
+        assertEquals("com.knosseir.admin.bruinfeed", appContext.getPackageName());
     }
 }

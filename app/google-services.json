@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:393512596944:android:2e21de20e3d31754",
         "android_client_info": {
-          "package_name": "com.example.admin.bruinfeed"
+          "package_name": "com.knosseir.admin.bruinfeed"
         }
       },
       "oauth_client": [
@@ -18,7 +18,7 @@
           "client_id": "393512596944-kqh2tf2rfukjqevbs1vcfapgj9lr5ckc.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.admin.bruinfeed",
+            "package_name": "com.knosseir.admin.bruinfeed",
             "certificate_hash": "2f7836d3f5e287d153d055b7170ba57f09b177cd"
           }
         },

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.admin.bruinfeed">
+    package="com.knosseir.admin.bruinfeed">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -23,7 +23,7 @@
             android:value="${GOOGLE_MAPS_API_KEY}" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.knosseir.admin.bruinfeed.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.NoActionBar">
@@ -36,52 +36,52 @@
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
-            android:name=".DiningHallActivity"
+            android:name="com.knosseir.admin.bruinfeed.DiningHallActivity"
             android:label="@string/title_activity_dining_hall"
             android:launchMode="singleTop"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.knosseir.admin.bruinfeed.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.admin.bruinfeed.MainActivity" />
+                android:value="com.knosseir.admin.bruinfeed.MainActivity" />
         </activity>
         <activity
-            android:name=".MealItemActivity"
+            android:name="com.knosseir.admin.bruinfeed.MealItemActivity"
             android:label="@string/title_activity_meal_item"
-            android:parentActivityName=".DiningHallActivity">
+            android:parentActivityName="com.knosseir.admin.bruinfeed.DiningHallActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.admin.bruinfeed.DiningHallActivity" />
+                android:value="com.knosseir.admin.bruinfeed.DiningHallActivity" />
         </activity>
         <activity
-            android:name=".FavoritesActivity"
+            android:name="com.knosseir.admin.bruinfeed.FavoritesActivity"
             android:label="@string/title_activity_favorites"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName="com.knosseir.admin.bruinfeed.MainActivity">
             <meta-data
                 android:name="android.app.shortcuts"
                 android:value="com.example.admin.bruinfeed.MainActivity" />
         </activity>
         <activity
-            android:name=".MealPeriodActivity"
+            android:name="com.knosseir.admin.bruinfeed.MealPeriodActivity"
             android:label="@string/title_activity_meal_period"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.knosseir.admin.bruinfeed.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
 
         </activity>
         <activity
-            android:name=".DiningHallInfoActivity"
+            android:name="com.knosseir.admin.bruinfeed.DiningHallInfoActivity"
             android:label="@string/title_activity_dining_hall_info"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.knosseir.admin.bruinfeed.MainActivity"
             android:theme="@style/AppTheme">
         </activity>
 
         <activity
-            android:name=".IntroActivity"
+            android:name="com.knosseir.admin.bruinfeed.IntroActivity"
             android:label="@string/title_activity_intro"
             android:theme="@style/AppTheme.NoActionBar"/>
 
         <service
-            android:name=".JobSchedulerService"
+            android:name="com.knosseir.admin.bruinfeed.JobSchedulerService"
             android:label="BruinFeed service"
             android:permission="android.permission.BIND_JOB_SERVICE">
         </service>
