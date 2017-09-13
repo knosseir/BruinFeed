@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -98,6 +99,9 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
+
+        // turn off screen rotation
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
 
         //  Declare a new thread to do a preference check
         Thread t = new Thread(new Runnable() {
