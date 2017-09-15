@@ -330,12 +330,15 @@ public class DiningHallActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.bottom_breakfast_button:
                     getMeals(selectedDiningHall, "Breakfast");
+                    setTitle("Breakfast at " + selectedDiningHall);
                     break;
                 case R.id.bottom_lunch_button:
                     getMeals(selectedDiningHall, "Lunch");
+                    setTitle("Lunch at " + selectedDiningHall);
                     break;
                 case R.id.bottom_dinner_button:
                     getMeals(selectedDiningHall, "Dinner");
+                    setTitle("Dinner at " + selectedDiningHall);
                     break;
             }
 

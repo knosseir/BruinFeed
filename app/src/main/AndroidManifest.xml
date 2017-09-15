@@ -86,6 +86,14 @@
             android:permission="android.permission.BIND_JOB_SERVICE">
         </service>
 
+        <service
+            android:exported="false"
+            android:name=".JobSchedulerServiceOld">
+            <intent-filter>
+                <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE"/>
+            </intent-filter>
+        </service>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="4ab5bd6d71d21a48ab122d53570b04b5f378b0f5" />

@@ -1,11 +1,7 @@
 package com.knosseir.admin.bruinfeed;
 
-import android.app.job.JobParameters;
-import android.app.job.JobService;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -24,12 +20,11 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * JobService to be scheduled by the JobScheduler if API >= 21
+ * JobService to be scheduled by the JobScheduler if API < 21.
  */
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class JobSchedulerService extends JobService {
-    private static final String TAG = "SyncService";
+public class JobSchedulerServiceOld extends com.firebase.jobdispatcher.JobService {
+    private static final String TAG = "SyncServiceOld";
     private static final String url = "http://menu.dining.ucla.edu/Menus";
 
     private ArrayList<String> diningHallNames = new ArrayList<>();
@@ -38,7 +33,7 @@ public class JobSchedulerService extends JobService {
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
-    public boolean onStartJob(final JobParameters params) {
+    public boolean onStartJob(final com.firebase.jobdispatcher.JobParameters params) {
         Log.d(TAG, "Job Service running");
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
@@ -64,7 +59,7 @@ public class JobSchedulerService extends JobService {
     }
 
     @Override
-    public boolean onStopJob(final JobParameters params) {
+    public boolean onStopJob(final com.firebase.jobdispatcher.JobParameters params) {
         // onStopJob() is called only if system stops job before it completes
         // clear database to prevent any data corruption issues
         db.clear();
@@ -162,3 +157,4 @@ public class JobSchedulerService extends JobService {
         }
     }
 }
+

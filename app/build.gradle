@@ -20,10 +20,10 @@ android {
     buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.knosseir.admin.bruinfeed"
-        minSdkVersion 21
+        minSdkVersion 14
         targetSdkVersion 25
-        versionCode 3
-        versionName "1.0.2"
+        versionCode 4
+        versionName "1.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
@@ -53,6 +53,7 @@ dependencies {
     compile 'com.miguelcatalan:materialsearchview:1.4.0'
     compile 'com.google.firebase:firebase-core:10.0.1'
     compile 'com.github.apl-devs:appintro:v4.2.2'
+    compile 'com.firebase:firebase-jobdispatcher:0.8.1'
     testCompile 'junit:junit:4.12'
     compile('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {
         transitive = true;

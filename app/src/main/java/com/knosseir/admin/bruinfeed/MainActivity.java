@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
@@ -36,6 +37,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
+import com.firebase.jobdispatcher.Constraint;
+import com.firebase.jobdispatcher.FirebaseJobDispatcher;
+import com.firebase.jobdispatcher.GooglePlayDriver;
+import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.JobService;
+import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.Trigger;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import io.fabric.sdk.android.Fabric;
@@ -162,20 +170,37 @@ public class MainActivity extends AppCompatActivity
         progress.setMessage(getResources().getString(R.string.initial_boot_load_message));
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
 
-        // create JobScheduler to download and update future meal data every day
-        // this will prevent long loading times in the future
-        JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
-        builder.setMinimumLatency(TimeUnit.HOURS.toMillis(1))   // job will happen a minimum of one hour after app has been launched
-                .setOverrideDeadline(TimeUnit.DAYS.toMillis(1)) // job will override all other requirements if it has not been run for a day
-                .setPersisted(true)     // persist job after device reboot
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any type of network connection
-                .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
-                .setRequiresCharging(false);   // job will execute whether or not device is charging due to low CPU/RAM footprint
+        // use JobScheduler on API >= 21
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // create JobScheduler to download and update future meal data every day
+            // this will prevent long loading times in the future
+            JobScheduler scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            JobInfo.Builder builder = new JobInfo.Builder(1, new ComponentName(getPackageName(), JobSchedulerService.class.getName()));
+            builder.setMinimumLatency(TimeUnit.HOURS.toMillis(1))   // job will happen a minimum of one hour after app has been launched
+                    .setOverrideDeadline(TimeUnit.DAYS.toMillis(1)) // job will override all other requirements if it has not been run for a day
+                    .setPersisted(true)     // persist job after device reboot
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)   // job will execute on any type of network connection
+                    .setRequiresDeviceIdle(true)   // job will execute only when device is idle to avoid modifying database while app is running
+                    .setRequiresCharging(false);   // job will execute whether or not device is charging due to low CPU/RAM footprint
 
-        // builder.build() will return <= 0 if there was an issue in starting the job
-        if (scheduler.schedule(builder.build()) <= 0) {
-            Log.e(MainTag, "Job failed to start");
+            // builder.build() will return <= 0 if there was an issue in starting the job
+            if (scheduler.schedule(builder.build()) <= 0) {
+                Log.e(MainTag, "Job failed to start");
+            }
+        }
+        // devices with API < 21 do not support JobScheduler, so use FirebaseJobDispatcher instead
+        else {
+            FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(MainActivity.this));
+            Job job = dispatcher.newJobBuilder()
+                    .setService(JobSchedulerServiceOld.class)
+                    .setRecurring(true)     // job is not a one-off job
+                    .setTag("meal_job")
+                    .setLifetime(Lifetime.FOREVER)      // persist job after reboot
+                    .setConstraints(Constraint.DEVICE_IDLE)     // job will execute only when device is idle to avoid modifying database while app is running
+                    .setTrigger(Trigger.executionWindow((int) TimeUnit.HOURS.toSeconds(1), (int) TimeUnit.DAYS.toSeconds(1)))
+                    .build();
+
+            dispatcher.mustSchedule(job);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
