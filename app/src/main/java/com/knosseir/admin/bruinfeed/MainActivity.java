@@ -99,6 +99,8 @@ public class MainActivity extends AppCompatActivity
     private DatabaseHandler db = new DatabaseHandler(this);
     private FirebaseAnalytics mFirebaseAnalytics;
 
+    AsyncTaskRunner dbRunner;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -295,15 +297,15 @@ public class MainActivity extends AppCompatActivity
         Date date = calendar.getTime();
         String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
-        AsyncTaskRunner runner = new AsyncTaskRunner();
+        dbRunner = new AsyncTaskRunner();
 
         if (!dateRange.contains(currentDateString)) {
             db.clear();
             // show uncancellable progress bar while initial data load occurs
             progress.show();
-            runner.execute(url, "true");
+            dbRunner.execute(url, "true");
         } else {
-            runner.execute(url, "false");
+            dbRunner.execute(url, "false");
             diningHallRefresh.setRefreshing(true);
         }
     }
@@ -621,7 +623,13 @@ public class MainActivity extends AppCompatActivity
                         Object obj = getItemAtPosition(position);
                         Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
                         diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
-                        diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
+
+                        boolean taskFinished = dbRunner.getStatus() == AsyncTask.Status.FINISHED;
+                        diningHallMenuIntent.putExtra("AsyncTaskCompleted", taskFinished);
+
+                        if (taskFinished) {
+                            diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
+                        }
                         startActivity(diningHallMenuIntent);
                     }
                 };

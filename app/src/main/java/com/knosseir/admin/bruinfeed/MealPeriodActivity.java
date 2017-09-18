@@ -15,6 +15,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.SearchEvent;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import java.text.SimpleDateFormat;
@@ -117,6 +119,9 @@ public class MealPeriodActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 onQueryTextChange(query);
+
+                // log query
+                Answers.getInstance().logSearch(new SearchEvent().putQuery(query).putCustomAttribute("Activity", "MealPeriodActivity"));
 
                 // hide keyboard after search is submitted and results are displayed
                 View view = getCurrentFocus();

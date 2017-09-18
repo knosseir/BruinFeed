@@ -55,6 +55,7 @@
 
     <string name="nutrition_facts">Nutrition Facts</string>
     <string name="serving_size">Serving Size</string>
+    <string name="servings_consumed">Servings Consumed</string>
     <string name="calories">Calories</string>
     <string name="fat_calories"> Fat Cal.</string>
     <string name="daily_value">% Daily Value*</string>
@@ -77,5 +78,8 @@
     <string name="no_information">No nutrition information is available for this item.</string>
 
     <string name="navigation_instructions">To navigate to the selected dining hall, tap on the red marker then select the blue navigation icon in the bottom right corner.</string>
+
+    <string name="add_serving">Add serving</string>
+    <string name="subtract_serving">Subtract serving</string>
 
 </resources>
