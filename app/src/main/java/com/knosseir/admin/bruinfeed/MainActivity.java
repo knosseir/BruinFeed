@@ -99,8 +99,6 @@ public class MainActivity extends AppCompatActivity
     private DatabaseHandler db = new DatabaseHandler(this);
     private FirebaseAnalytics mFirebaseAnalytics;
 
-    AsyncTaskRunner dbRunner;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -297,15 +295,15 @@ public class MainActivity extends AppCompatActivity
         Date date = calendar.getTime();
         String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
-        dbRunner = new AsyncTaskRunner();
+        AsyncTaskRunner runner = new AsyncTaskRunner();
 
         if (!dateRange.contains(currentDateString)) {
             db.clear();
             // show uncancellable progress bar while initial data load occurs
             progress.show();
-            dbRunner.execute(url, "true");
+            runner.execute(url, "true");
         } else {
-            dbRunner.execute(url, "false");
+            runner.execute(url, "false");
             diningHallRefresh.setRefreshing(true);
         }
     }
@@ -623,13 +621,7 @@ public class MainActivity extends AppCompatActivity
                         Object obj = getItemAtPosition(position);
                         Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
                         diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
-
-                        boolean taskFinished = dbRunner.getStatus() == AsyncTask.Status.FINISHED;
-                        diningHallMenuIntent.putExtra("AsyncTaskCompleted", taskFinished);
-
-                        if (taskFinished) {
-                            diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
-                        }
+                        diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
                         startActivity(diningHallMenuIntent);
                     }
                 };
@@ -665,7 +657,7 @@ public class MainActivity extends AppCompatActivity
                 if (currentHour < breakfastOpen ||
                         (currentHour <= breakfastOpen && currentMinute < breakfastOpeningHours.get(diningHall).get(Calendar.MINUTE))) {
                     Calendar breakfastOpenCal = breakfastOpeningHours.get(diningHall);
-                    String period = ((int) breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";    // cast to int is redundant but Android Studio throws errors otherwise
+                    String period = ((int) breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";    // cast to int is redundant but a bug in Android Studio makes it throw errors otherwise
                     String minute = ((int) breakfastOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(breakfastOpenCal.get(Calendar.MINUTE));
                     holder.footer.setText("Opening for breakfast at " + breakfastOpenCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);

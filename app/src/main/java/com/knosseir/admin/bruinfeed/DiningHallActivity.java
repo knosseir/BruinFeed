@@ -3,7 +3,6 @@ package com.knosseir.admin.bruinfeed;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -21,14 +20,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.answers.SearchEvent;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,9 +30,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class DiningHallActivity extends AppCompatActivity {
-
-    private static final String url = "http://menu.dining.ucla.edu/Menus";
-
 
     private static final String DiningHallTag = "DiningHallActivity";
     public static final String FILTER_PREFERENCES_NAME = "DiningFilterPrefs";
@@ -54,7 +43,6 @@ public class DiningHallActivity extends AppCompatActivity {
     MaterialSearchView searchView;
 
     String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy, no_shellfish, shellfish;
-    boolean taskFinished;
 
     private RecyclerView recyclerView;
     private SimpleAdapter mAdapter;
@@ -128,19 +116,19 @@ public class DiningHallActivity extends AppCompatActivity {
         }
 
         // TODO: CHOOSE MEAL BASED ON DINING PERIODS FOR EACH DINING HALL
-        activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
-        setTitle(meal + " at " + selectedDiningHall);
 
         selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
-        taskFinished = getIntent().getBooleanExtra("AsyncTaskCompleted", false);
+        activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
+        activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
 
-        if (taskFinished) {
-            activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
-            updateActivityLevel(activityLevel);
+        setTitle(meal + " at " + selectedDiningHall);
+
+        if (activityLevel == 0) {
+            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
         } else {
-            AsyncTaskRunner runner = new AsyncTaskRunner();
-            runner.execute(url + "/" + selectedDiningHall);
+            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently " + activityLevel + "%");
         }
+        activityLevelProgressBar.setProgress(activityLevel);
 
         getMeals(selectedDiningHall, meal);
 
@@ -149,9 +137,6 @@ public class DiningHallActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 onQueryTextChange(query);
-
-                // log query
-                Answers.getInstance().logSearch(new SearchEvent().putQuery(query).putCustomAttribute("Activity", "DiningHallActivity"));
 
                 // hide keyboard after search is submitted and results are displayed
                 View view = getCurrentFocus();
@@ -222,15 +207,6 @@ public class DiningHallActivity extends AppCompatActivity {
         // Update RecyclerView
         recyclerView.setAdapter(mSectionedAdapter);
         mAdapter.notifyDataSetChanged();
-    }
-
-    public void updateActivityLevel(int activityLevel) {
-        if (activityLevel == 0) {
-            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
-        } else {
-            activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently " + activityLevel + "%");
-        }
-        activityLevelProgressBar.setProgress(activityLevel);
     }
 
     @Override
@@ -430,26 +406,5 @@ public class DiningHallActivity extends AppCompatActivity {
 
         // update data set in case user favorited an item
         mAdapter.notifyDataSetChanged();
-    }
-
-    public class AsyncTaskRunner extends AsyncTask<String, Void, Integer> {
-        @Override
-        protected Integer doInBackground(String... params) {
-            try {
-                Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
-                Element level = doc.getElementsMatchingOwnText("Activity Level").first();
-
-                return Integer.parseInt(level.parent().ownText().replaceAll("[: %]", ""));
-
-            } catch (Exception e) {
-                Log.e(DiningHallTag, e.toString());
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Integer activityLevel) {
-            updateActivityLevel(activityLevel);
-        }
     }
 }

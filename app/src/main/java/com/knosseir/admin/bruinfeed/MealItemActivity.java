@@ -14,8 +14,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -24,28 +22,21 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MealItemActivity extends AppCompatActivity {
 
     private static final String MealItemTag = "MealItemActivity";
+    public static final String FAVORITE_PREFERENCES_NAME = "FavPrefs";
 
     String name, description, url, hall, meal, section, descriptors;
     boolean favorite;
     MealItem selectedItem;
     DatabaseHandler db;
     SharedPreferences favSettings;
-    SharedPreferences.Editor favEditor;
-
-    SharedPreferences nutritionCounts;
-    SharedPreferences.Editor nutritionEditor;
-
+    SharedPreferences.Editor editor;
     Elements nutritionFactElements;
     Element servingSize, calories, caloriesFromFat, vitaminsElement;
-
-    public static final String FAVORITE_PREFERENCES_NAME = "FavPrefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +56,7 @@ public class MealItemActivity extends AppCompatActivity {
         descriptors = selectedItem.getDescriptors();
 
         favSettings = getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
-        favEditor = favSettings.edit();
-
-        nutritionEditor = nutritionCounts.edit();
+        editor = favSettings.edit();
 
         favorite = favSettings.getBoolean(selectedItem.getName(), false);
 
@@ -103,27 +92,6 @@ public class MealItemActivity extends AppCompatActivity {
 
         ((TextView) findViewById(R.id.descriptor_label)).setText(descriptorText);
         ((TextView) findViewById(R.id.descriptor_list)).setText(descriptors);
-
-        ImageButton addServing = (ImageButton) findViewById(R.id.increment_button);
-        ImageButton subtractServing = (ImageButton) findViewById(R.id.subtract_button);
-        final TextView servingCount = (TextView) findViewById(R.id.servings_consumed_count);
-        servingCount.setText(String.valueOf(0));
-
-        addServing.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                servingCount.setText(String.valueOf(Integer.parseInt(servingCount.getText().toString()) + 1));
-            }
-        });
-
-        subtractServing.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Integer.parseInt(servingCount.getText().toString()) > 0) {
-                    servingCount.setText(String.valueOf(Integer.parseInt(servingCount.getText().toString()) - 1));
-                }
-            }
-        });
     }
 
     @Override
@@ -168,12 +136,12 @@ public class MealItemActivity extends AppCompatActivity {
 
     public boolean toggleFavorite(MealItem mealItem) {
         if (favorite) {
-            favEditor.putBoolean(mealItem.getName(), false);    // item is already a favorite, so unfavorite it
-            favEditor.commit();
+            editor.putBoolean(mealItem.getName(), false);    // item is already a favorite, so unfavorite it
+            editor.commit();
             return false;
         } else {
-            favEditor.putBoolean(mealItem.getName(), true);    // item is not already a favorite, so mark it as a favorite
-            favEditor.commit();
+            editor.putBoolean(mealItem.getName(), true);    // item is not already a favorite, so mark it as a favorite
+            editor.commit();
             return true;
         }
     }
@@ -224,8 +192,7 @@ public class MealItemActivity extends AppCompatActivity {
 
             for (Element element : nutritionFactElements.select("p.nfnutrient")) {
                 if (element.ownText().contains("Calories")) {
-                    String values = element.ownText().substring(element.ownText().lastIndexOf(" ") + 1);
-                    ((TextView) findViewById(R.id.calories_value)).setText(values);
+                    ((TextView) findViewById(R.id.calories_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
                 } else if (element.text().contains("Total Fat")) {
                     ((TextView) findViewById(R.id.total_fat_value)).setText(element.ownText().substring(element.ownText().lastIndexOf(" ") + 1));
                     ((TextView) findViewById(R.id.total_fat_daily_percentage_value)).setText(element.select("span.nfdvvalnum").text() + "%");
