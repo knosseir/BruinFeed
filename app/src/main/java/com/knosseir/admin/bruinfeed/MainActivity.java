@@ -657,8 +657,8 @@ public class MainActivity extends AppCompatActivity
                 if (currentHour < breakfastOpen ||
                         (currentHour <= breakfastOpen && currentMinute < breakfastOpeningHours.get(diningHall).get(Calendar.MINUTE))) {
                     Calendar breakfastOpenCal = breakfastOpeningHours.get(diningHall);
-                    String period = (breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (breakfastOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(breakfastOpenCal.get(Calendar.MINUTE));
+                    String period = ((int) breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";    // cast to int is redundant but Android Studio throws errors otherwise
+                    String minute = ((int) breakfastOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(breakfastOpenCal.get(Calendar.MINUTE));
                     holder.footer.setText("Opening for breakfast at " + breakfastOpenCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
@@ -666,16 +666,16 @@ public class MainActivity extends AppCompatActivity
                 else if (currentHour < breakfastClose ||
                         currentHour <= breakfastClose && currentMinute < breakfastClosingHours.get(diningHall).get(Calendar.MINUTE)) {
                     Calendar breakfastCloseCal = breakfastClosingHours.get(diningHall);
-                    String period = (breakfastCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (breakfastCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(breakfastCloseCal.get(Calendar.MINUTE));
+                    String period = ((int) breakfastCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                    String minute = ((int) breakfastCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(breakfastCloseCal.get(Calendar.MINUTE));
                     holder.footer.setText("Open for breakfast until " + breakfastCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                 }
                 // dining hall is between breakfast and lunch phases
                 else if (currentHour < lunchOpen ||
                         currentHour <= lunchOpen && currentMinute < lunchOpeningHours.get(diningHall).get(Calendar.MINUTE)) {
                     Calendar lunchOpenCal = lunchOpeningHours.get(diningHall);
-                    String period = (lunchOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (lunchOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(lunchOpenCal.get(Calendar.MINUTE));
+                    String period = ((int) lunchOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                    String minute = ((int) lunchOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(lunchOpenCal.get(Calendar.MINUTE));
                     holder.footer.setText("Opening for lunch at " + lunchOpenCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
@@ -683,16 +683,16 @@ public class MainActivity extends AppCompatActivity
                 else if (currentHour < lunchClose ||
                         currentHour <= lunchClose && currentMinute < lunchClosingHours.get(diningHall).get(Calendar.MINUTE)) {
                     Calendar lunchCloseCal = lunchClosingHours.get(diningHall);
-                    String period = (lunchCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (lunchCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(lunchCloseCal.get(Calendar.MINUTE));
+                    String period = ((int) lunchCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                    String minute = ((int) lunchCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(lunchCloseCal.get(Calendar.MINUTE));
                     holder.footer.setText("Open for lunch until " + lunchCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                 }
                 // dining hall is between lunch and dinner phases
                 else if (currentHour < dinnerOpen ||
                         currentHour <= dinnerOpen && currentMinute < dinnerOpeningHours.get(diningHall).get(Calendar.MINUTE)) {
                     Calendar dinnerOpenCal = dinnerOpeningHours.get(diningHall);
-                    String period = (dinnerOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (dinnerOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerOpenCal.get(Calendar.MINUTE));
+                    String period = ((int) dinnerOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                    String minute = ((int) dinnerOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerOpenCal.get(Calendar.MINUTE));
                     holder.footer.setText("Opening for dinner at " + dinnerOpenCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
@@ -700,16 +700,16 @@ public class MainActivity extends AppCompatActivity
                 else if (currentHour < dinnerClose ||
                         currentHour <= dinnerClose && currentMinute < dinnerClosingHours.get(diningHall).get(Calendar.MINUTE)) {
                     Calendar dinnerCloseCal = dinnerClosingHours.get(diningHall);
-                    String period = (dinnerCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (dinnerCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerCloseCal.get(Calendar.MINUTE));
+                    String period = ((int) dinnerCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                    String minute = ((int) dinnerCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerCloseCal.get(Calendar.MINUTE));
                     holder.footer.setText("Open for dinner until " + dinnerCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                 }
                 // dining hall has closed for dinner
                 else if (currentHour > dinnerClose ||
                         currentHour >= dinnerClose && currentMinute > dinnerClosingHours.get(diningHall).get(Calendar.MINUTE)) {
                     Calendar dinnerCloseCal = dinnerClosingHours.get(diningHall);
-                    String period = (dinnerCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
-                    String minute = (dinnerCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerCloseCal.get(Calendar.MINUTE));
+                    String period = ((int) dinnerCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                    String minute = ((int) dinnerCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerCloseCal.get(Calendar.MINUTE));
                     holder.footer.setText("Closed for tonight at " + dinnerCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
