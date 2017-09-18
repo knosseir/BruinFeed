@@ -42,7 +42,7 @@ public class DiningHallActivity extends AppCompatActivity {
     String selectedDiningHall;
     MaterialSearchView searchView;
 
-    String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy;
+    String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy, no_shellfish, shellfish;
 
     private RecyclerView recyclerView;
     private SimpleAdapter mAdapter;
@@ -95,6 +95,8 @@ public class DiningHallActivity extends AppCompatActivity {
         wheat = getResources().getString(R.string.wheat);
         no_soy = getResources().getString(R.string.no_soy);
         soy = getResources().getString(R.string.soy);
+        no_shellfish = getResources().getString(R.string.no_shellfish);
+        shellfish = getResources().getString(R.string.shellfish);
 
         clearFilters();
 
@@ -304,6 +306,9 @@ public class DiningHallActivity extends AppCompatActivity {
                 menuItems.remove(mealItem);
             }
             if (filters.getBoolean(no_soy, false) && mealItem.getDescriptors().contains(soy)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_shellfish, false) && mealItem.getDescriptors().contains(shellfish)) {
                 menuItems.remove(mealItem);
             }
         }

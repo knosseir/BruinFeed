@@ -65,6 +65,10 @@ public class DiningHallInfoActivity extends AppCompatActivity
                 diningHallLocation = new LatLng(34.072104, -118.449712);
                 selectedDiningHallDescription = "Sproul Dining is located in Carnesale Commons";
                 break;
+            case "Bruin Plate":
+                diningHallLocation = new LatLng(34.072002, -118.449787);
+                selectedDiningHallDescription = "Bruin Plate is located above Bruin Fitness Center";
+                break;
             default:
                 diningHallLocation = new LatLng(34.068903, -118.445149);
         }

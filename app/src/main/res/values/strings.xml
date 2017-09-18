@@ -50,6 +50,8 @@
     <string name="wheat">Contains Wheat</string>
     <string name="no_soy">Contains No Soy</string>
     <string name="soy">Contains Soy</string>
+    <string name="no_shellfish">Contains No Shellfish</string>
+    <string name="shellfish">Contains Shellfish</string>
 
     <string name="nutrition_facts">Nutrition Facts</string>
     <string name="serving_size">Serving Size</string>

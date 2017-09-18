@@ -15,5 +15,7 @@
             android:title="@string/no_wheat"/>
         <item android:id="@+id/no_soy"
             android:title="@string/no_soy"/>
+        <item android:id="@+id/no_shellfish"
+            android:title="@string/no_shellfish"/>
     </group>
 </menu>
