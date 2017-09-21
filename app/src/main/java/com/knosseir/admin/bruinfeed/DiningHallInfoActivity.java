@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -79,5 +80,6 @@ public class DiningHallInfoActivity extends AppCompatActivity
         googleMap.setMinZoomPreference(17.0f);
 
         ((TextView) findViewById(R.id.dining_hall_description)).setText(selectedDiningHallDescription);
+        ((TextView) findViewById(R.id.dining_hall_description)).setGravity(Gravity.CENTER);
     }
 }
