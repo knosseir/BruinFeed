@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -56,9 +57,9 @@ public class DiningHallActivity extends AppCompatActivity {
     private ProgressBar activityLevelProgressBar;
 
     Calendar calendar = Calendar.getInstance();
-    Date date = calendar.getTime();
-    String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
-
+    Date date;
+    String dateString;
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +83,12 @@ public class DiningHallActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        if (calendar.get(Calendar.HOUR_OF_DAY) >= 22) {
+            calendar.add(Calendar.DATE, 1);
+        }
+        date = calendar.getTime();
+        dateString = sdf.format(date);
 
         vegan = getResources().getString(R.string.vegan);
         vegetarian = getResources().getString(R.string.vegetarian);

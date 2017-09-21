@@ -292,6 +292,11 @@ public class MainActivity extends AppCompatActivity
     public void updateDatabase() {
         String dateRange = getCachedDateRange(db);
         Calendar calendar = Calendar.getInstance();
+
+        if (calendar.get(Calendar.HOUR_OF_DAY) >= 22) {
+            calendar.add(Calendar.DATE, 1);
+        }
+
         Date date = calendar.getTime();
         String currentDateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
@@ -386,11 +391,17 @@ public class MainActivity extends AppCompatActivity
 
                 Calendar calendar = Calendar.getInstance();
 
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+                if (calendar.get(Calendar.HOUR_OF_DAY) >= 22) {
+                    calendar.add(Calendar.DATE, 1);
+                }
+
                 Date date = calendar.getTime();
-                String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
+                String dateString = sdf.format(date);
 
                 for (String meal : meals) {
-                    Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall.replaceAll("\\s+", "") + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
+                    Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall.replaceAll("\\s+", "").replaceAll("FEASTatRieber", "FeastAtRieber") + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
                     Elements links = doc.select("a.recipeLink, li.sect-item");
 
                     String section = "";
@@ -714,6 +725,8 @@ public class MainActivity extends AppCompatActivity
                     holder.footer.setTextColor(Color.RED);
                 }
             } catch (Exception e) {
+                holder.footer.setText("Closed for today");
+                holder.footer.setTextColor(Color.RED);
                 Log.e(MainTag, e.toString());
             }
         }

@@ -86,6 +86,11 @@ public class MealPeriodActivity extends AppCompatActivity {
         editor.apply();
 
         Calendar calendar = Calendar.getInstance();
+
+        if (calendar.get(Calendar.HOUR_OF_DAY) >= 22) {
+            calendar.add(Calendar.DATE, 1);
+        }
+
         Date date = calendar.getTime();
         String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 

@@ -29,6 +29,8 @@
     <string name="lunch_closed">Closed for lunch</string>
     <string name="dinner_closed">Closed for dinner</string>
 
+    <string name="no_meal_items">The menu for the selected dining period is empty.</string>
+
     <string name="favorites_static_shortcut_long_label">Favorites shortcut long label</string>
     <string name="favorites_static_shortcut_short_label">Favorites</string>
     <string name="favorites_static_shortcut_disabled_message">Disabled</string>
