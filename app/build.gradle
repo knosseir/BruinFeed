@@ -22,8 +22,8 @@ android {
         applicationId "com.knosseir.admin.bruinfeed"
         minSdkVersion 14
         targetSdkVersion 26
-        versionCode 6
-        versionName "1.1.2"
+        versionCode 9
+        versionName "1.1.5"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true

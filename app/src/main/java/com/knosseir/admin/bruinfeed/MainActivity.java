@@ -41,12 +41,9 @@ import com.firebase.jobdispatcher.Constraint;
 import com.firebase.jobdispatcher.FirebaseJobDispatcher;
 import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
-import com.firebase.jobdispatcher.JobService;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.Trigger;
 import com.google.firebase.analytics.FirebaseAnalytics;
-
-import io.fabric.sdk.android.Fabric;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -60,6 +57,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -68,6 +66,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -303,9 +303,6 @@ public class MainActivity extends AppCompatActivity
         AsyncTaskRunner runner = new AsyncTaskRunner();
 
         if (!dateRange.contains(currentDateString)) {
-            db.clear();
-            // show uncancellable progress bar while initial data load occurs
-            progress.show();
             runner.execute(url, "true");
         } else {
             runner.execute(url, "false");
@@ -327,35 +324,52 @@ public class MainActivity extends AppCompatActivity
                 // connect to url, set 10 second timeout in case internet connection is slow
                 Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
 
-                if (params[1].equals("true")) {
-                    Elements diningHalls = doc.select("h3");
+                Elements diningHalls = doc.select("h3");
 
-                    diningHallNames.clear();
+                diningHallNames.clear();
 
-                    for (Element element : diningHalls)
-                        diningHallNames.add(element.ownText());
+                for (Element element : diningHalls)
+                    diningHallNames.add(element.ownText());
 
-                    // remove duplicates from diningHallNames ArrayList
-                    Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
-                    diningHallNames.clear();
-                    diningHallNames.addAll(diningHallTemp);
+                // remove duplicates from diningHallNames ArrayList
+                Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
+                diningHallNames.clear();
+                diningHallNames.addAll(diningHallTemp);
 
-                    // get meals from all dining halls
-                    for (String diningHall : diningHallNames) {
-                        getMeals(diningHall);
+                // sort dining halls alphabetically
+                Collections.sort(diningHallNames);
+
+                List<String> cachedDiningHallNames = new ArrayList<>();
+
+                List<MealItem> allMealItems = db.getAllMealItems();
+
+                String diningHall = "";
+
+                for (MealItem mealItem : allMealItems) {
+                    if (!mealItem.getHall().equals(diningHall)) {
+                        cachedDiningHallNames.add(mealItem.getHall());
+                        diningHall = mealItem.getHall();
                     }
-                } else {
-                    diningHallNames.clear();
+                }
 
-                    List<MealItem> allMealItems = db.getAllMealItems();
+                Collections.sort(cachedDiningHallNames);
 
-                    String diningHall = "";
+                boolean match = (diningHallNames.size() == cachedDiningHallNames.size() && diningHallNames.equals(cachedDiningHallNames));
 
-                    for (MealItem mealItem : allMealItems) {
-                        if (!mealItem.getHall().equals(diningHall)) {
-                            diningHallNames.add(mealItem.getHall());
-                            diningHall = mealItem.getHall();
+                if (!match || params[1].equals("true")) {   // if params[1] is true then cached date range does not include current date
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // show uncancellable progress bar while data load occurs
+                            progress.show();
                         }
+                    });
+
+                    db.clear();
+                    // get meals from all dining halls
+                    for (String hall : diningHallNames) {
+                        getMeals(hall);
                     }
                 }
 
@@ -455,10 +469,20 @@ public class MainActivity extends AppCompatActivity
         }
 
         public boolean getActivityLevels(Document doc) {
-            Elements levels = doc.getElementsMatchingOwnText("Activity Level");
+            try {
+                Elements levels = doc.getElementsMatchingOwnText("Activity Level");
 
-            for (int i = 0; i < levels.size(); i++) {
-                activityLevelMap.put(diningHallNames.get(i), Integer.parseInt(levels.get(i).parent().ownText().replaceAll("[: %]", "")));
+                for (int i = 0; i < levels.size(); i++) {
+                    Elements siblings = levels.get(i).parent().siblingElements();
+                    Element nameElement = siblings.select("h3.col-header").first();
+                    String name = nameElement.ownText();
+                    activityLevelMap.put(name, Integer.parseInt(levels.get(i).parent().ownText().replaceAll("[: %]", "")));
+                }
+            } catch (IndexOutOfBoundsException e) {
+                Log.e(MainTag, e.toString());
+                activityLevelMap.clear();
+                AsyncTaskRunner runner = new AsyncTaskRunner();
+                runner.execute(url, "false");
             }
 
             return true;
@@ -654,18 +678,35 @@ public class MainActivity extends AppCompatActivity
                 int currentHour = cal.get(Calendar.HOUR_OF_DAY);
                 int currentMinute = cal.get(Calendar.MINUTE);
 
-                int breakfastOpen = breakfastOpeningHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
-                int lunchOpen = lunchOpeningHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
-                int dinnerOpen = dinnerOpeningHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
+                Calendar breakfastOpeningCalendar = breakfastOpeningHours.get(diningHall);
+                Calendar lunchOpeningCalendar = lunchOpeningHours.get(diningHall);
+                Calendar dinnerOpeningCalendar = dinnerOpeningHours.get(diningHall);
+                Calendar breakfastClosingCalendar = breakfastClosingHours.get(diningHall);
+                Calendar lunchClosingCalendar = lunchClosingHours.get(diningHall);
+                Calendar dinnerClosingCalendar = dinnerClosingHours.get(diningHall);
 
-                int breakfastClose = breakfastClosingHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
-                int lunchClose = lunchClosingHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
-                int dinnerClose = dinnerClosingHours.get(diningHall).get(Calendar.HOUR_OF_DAY);
+                int breakfastOpen = (breakfastOpeningCalendar != null) ? breakfastOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+                int lunchOpen = (lunchOpeningCalendar != null) ? lunchOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+                int dinnerOpen = (dinnerOpeningCalendar != null) ? dinnerOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+
+                int breakfastClose = (breakfastClosingCalendar != null) ? breakfastClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+                int lunchClose = (lunchClosingCalendar != null) ? lunchClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+                int dinnerClose = (dinnerClosingCalendar != null) ? dinnerClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
 
                 holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
 
+                if (breakfastOpen == 0 && breakfastClose == 0 && currentHour < 11) {
+                    holder.footer.setText("Closed for breakfast");
+                    holder.footer.setTextColor(Color.RED);
+                } else if (lunchOpen == 0 && lunchClose == 0 && currentHour < 17) {
+                    holder.footer.setText("Closed for lunch");
+                    holder.footer.setTextColor(Color.RED);
+                } else if (dinnerOpen == 0 && dinnerClose == 0) {
+                    holder.footer.setText("Closed for dinner");
+                    holder.footer.setTextColor(Color.RED);
+                }
                 // dining hall hasn't opened for breakfast yet
-                if (currentHour < breakfastOpen ||
+                else if (currentHour < breakfastOpen ||
                         (currentHour <= breakfastOpen && currentMinute < breakfastOpeningHours.get(diningHall).get(Calendar.MINUTE))) {
                     Calendar breakfastOpenCal = breakfastOpeningHours.get(diningHall);
                     String period = ((int) breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";    // cast to int is redundant but a bug in Android Studio makes it throw errors otherwise
@@ -724,9 +765,7 @@ public class MainActivity extends AppCompatActivity
                     holder.footer.setText("Closed for tonight at " + dinnerCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
-            } catch (Exception e) {
-                holder.footer.setText("Closed for today");
-                holder.footer.setTextColor(Color.RED);
+            } catch (IndexOutOfBoundsException e) {
                 Log.e(MainTag, e.toString());
             }
         }

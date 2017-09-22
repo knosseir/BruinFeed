@@ -20,7 +20,7 @@
     <string name="no_description">No description available</string>
     <string name="connection_timeout">Your connection timed out.</string>
     <string name="no_items_loaded">No items were loaded. Please try again.</string>
-    <string name="initial_boot_load_message">Please wait...</string>
+    <string name="initial_boot_load_message">Please wait while we cache future meal data...</string>
 
     <string name="empty_menu">The selected menu is empty.</string>
     <string name="empty_favorites">Your favorites list is empty.</string>
