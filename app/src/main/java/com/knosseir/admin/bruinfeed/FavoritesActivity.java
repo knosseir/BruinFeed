@@ -33,7 +33,7 @@ public class FavoritesActivity extends AppCompatActivity {
         setTitle(text);
 
         allMeals = db.getAllMealItems();
-        getFavorites(allMeals);
+        // getFavorites(allMeals);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class FavoritesActivity extends AppCompatActivity {
             Snackbar.make(findViewById(R.id.favoritesRecyclerView), R.string.empty_favorites, Snackbar.LENGTH_INDEFINITE).show();
         }
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.favoritesRecyclerView);
+        RecyclerView recyclerView = findViewById(R.id.favoritesRecyclerView);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         SimpleAdapter mAdapter = new SimpleAdapter(getBaseContext(), favMeals);

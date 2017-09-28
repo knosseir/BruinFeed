@@ -66,18 +66,18 @@ public class DiningHallActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dining_hall);
 
-        recyclerView = (RecyclerView) findViewById(R.id.menuRecyclerView);
+        recyclerView = findViewById(R.id.menuRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new SimpleAdapter(getBaseContext(), menuItems);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        activityLevelTextView = (TextView) findViewById(R.id.activityLevelTextBox);
+        activityLevelTextView = findViewById(R.id.activityLevelTextBox);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.dining_toolbar);
+        Toolbar toolbar = findViewById(R.id.dining_toolbar);
         toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
         setSupportActionBar(toolbar);
@@ -126,7 +126,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
         selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
         activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
-        activityLevelProgressBar = (ProgressBar) findViewById(R.id.activityLevel);
+        activityLevelProgressBar = findViewById(R.id.activityLevel);
 
         setTitle(meal + " at " + selectedDiningHall);
 
@@ -139,7 +139,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
         getMeals(selectedDiningHall, meal);
 
-        searchView = (MaterialSearchView) findViewById(R.id.dining_search_view);
+        searchView = findViewById(R.id.dining_search_view);
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -389,7 +389,7 @@ public class DiningHallActivity extends AppCompatActivity {
         SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
         SharedPreferences.Editor editor = filters.edit();
 
-        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy};
+        String mealDescriptorArray[] = { vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy, no_shellfish };
 
         // uncheck all filters by default
         for (String descriptor : mealDescriptorArray) {

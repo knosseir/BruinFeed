@@ -37,7 +37,7 @@ public class MealPeriodActivity extends AppCompatActivity {
     List<MealItem> originalMenuItems = new ArrayList<>();
     List<SimpleSectionedRecyclerViewAdapter.Section> originalSections = new ArrayList<>();
 
-    String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy;
+    String vegan, vegetarian, no_nuts, nuts, no_dairy, dairy, no_eggs, eggs, no_wheat, wheat, no_soy, soy, no_shellfish, shellfish;
 
     private RecyclerView recyclerView;
     private SimpleAdapter mAdapter;
@@ -52,7 +52,7 @@ public class MealPeriodActivity extends AppCompatActivity {
         selectedMeal = getIntent().getStringExtra("selectedMeal");
         setTitle(selectedMeal);
 
-        recyclerView = (RecyclerView) findViewById(R.id.mealListRecyclerView);
+        recyclerView = findViewById(R.id.mealListRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new SimpleAdapter(getBaseContext(), menuItems);
@@ -73,11 +73,13 @@ public class MealPeriodActivity extends AppCompatActivity {
         wheat = getResources().getString(R.string.wheat);
         no_soy = getResources().getString(R.string.no_soy);
         soy = getResources().getString(R.string.soy);
+        no_shellfish = getResources().getString(R.string.no_shellfish);
+        shellfish = getResources().getString(R.string.shellfish);
 
         SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
         SharedPreferences.Editor editor = filters.edit();
 
-        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy};
+        String mealDescriptorArray[] = { vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy, no_shellfish };
 
         // uncheck all filters by default
         for (String descriptor : mealDescriptorArray) {
@@ -112,14 +114,14 @@ public class MealPeriodActivity extends AppCompatActivity {
 
         updateRecyclerView();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_arrow_back_black_24dp));
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        searchView = (MaterialSearchView) findViewById(R.id.search_view);
+        searchView = findViewById(R.id.search_view);
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -208,7 +210,7 @@ public class MealPeriodActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search_menu_no_map, menu);
-        MaterialSearchView searchView = (MaterialSearchView) findViewById(R.id.search_view);
+        MaterialSearchView searchView = findViewById(R.id.search_view);
 
         MenuItem item = menu.findItem(R.id.action_search);
         searchView.setMenuItem(item);
@@ -291,6 +293,9 @@ public class MealPeriodActivity extends AppCompatActivity {
                 menuItems.remove(mealItem);
             }
             if (filters.getBoolean(no_soy, false) && mealItem.getDescriptors().contains(soy)) {
+                menuItems.remove(mealItem);
+            }
+            if (filters.getBoolean(no_shellfish, false) && mealItem.getDescriptors().contains(shellfish)) {
                 menuItems.remove(mealItem);
             }
         }

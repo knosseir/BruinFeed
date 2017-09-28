@@ -56,7 +56,6 @@ public class MealItemActivity extends AppCompatActivity {
         descriptors = selectedItem.getDescriptors();
 
         favSettings = getSharedPreferences(FAVORITE_PREFERENCES_NAME, 0);
-        editor = favSettings.edit();
 
         favorite = favSettings.getBoolean(selectedItem.getName(), false);
 
@@ -135,6 +134,8 @@ public class MealItemActivity extends AppCompatActivity {
     }
 
     public boolean toggleFavorite(MealItem mealItem) {
+        editor = favSettings.edit();
+
         if (favorite) {
             editor.putBoolean(mealItem.getName(), false);    // item is already a favorite, so unfavorite it
             editor.commit();

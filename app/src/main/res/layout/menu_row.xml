@@ -21,10 +21,11 @@
         android:layout_height="26dip"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
+        android:layout_marginRight="12dp"
         android:ellipsize="marquee"
         android:maxLines="1"
         android:text="Description"
-        android:textSize="12sp"/>
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/firstLine"
@@ -35,6 +36,6 @@
         android:layout_alignParentTop="true"
         android:layout_alignWithParentIfMissing="true"
         android:gravity="center_vertical"
-        android:textSize="16sp"/>
+        android:textSize="16sp" />
 
 </RelativeLayout>

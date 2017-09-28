@@ -111,7 +111,7 @@ public class JobSchedulerService extends JobService {
                     String dateString = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date);
 
                     for (String meal : meals) {
-                        Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall.replaceAll("\\s+", "") + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
+                        Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Menus/" + diningHall.replaceAll("\\s+", "").replaceAll("FEASTatRieber", "FeastAtRieber") + "/" + dateString + "/" + meal).timeout(10 * 1000).get();
                         Elements links = doc.select("a.recipeLink, li.sect-item");
 
                         String section = "";

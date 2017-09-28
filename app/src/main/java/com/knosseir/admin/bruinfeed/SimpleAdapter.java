@@ -38,9 +38,9 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
         public SimpleViewHolder(View view) {
             super(view);
-            title = (TextView) view.findViewById(R.id.firstLine);
-            description = (TextView) view.findViewById(R.id.secondLine);
-            favorite = (ImageButton) view.findViewById(R.id.favorite_indicator);
+            title = view.findViewById(R.id.firstLine);
+            description = view.findViewById(R.id.secondLine);
+            favorite = view.findViewById(R.id.favorite_indicator);
         }
     }
 

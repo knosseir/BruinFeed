@@ -87,6 +87,9 @@ public class MainActivity extends AppCompatActivity
     private Map<String, Calendar> dinnerOpeningHours = new HashMap<>();
     private Map<String, Calendar> dinnerClosingHours = new HashMap<>();
 
+    private Map<String, Calendar> brunchOpeningHours = new HashMap<>();
+    private Map<String, Calendar> brunchClosingHours = new HashMap<>();
+
     private SwipeRefreshLayout diningHallRefresh;
     ProgressDialog progress;
 
@@ -104,8 +107,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        diningHallRefresh = (SwipeRefreshLayout) findViewById(R.id.diningHallRefresh);
+        Toolbar toolbar = findViewById(R.id.main_toolbar);
+        diningHallRefresh = findViewById(R.id.diningHallRefresh);
         setSupportActionBar(toolbar);
 
         // turn off screen rotation
@@ -157,12 +160,12 @@ public class MainActivity extends AppCompatActivity
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "App Open");
         mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, bundle);
 
-        recyclerView = (RecyclerView) findViewById(R.id.diningHallRecyclerView);
+        recyclerView = findViewById(R.id.diningHallRecyclerView);
         mLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new DiningHallAdapter(diningHallNames);
-        recyclerView.setAdapter(mAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        recyclerView.setAdapter(mAdapter);
 
         // display loading spinner on initial boot up
         progress = new ProgressDialog(MainActivity.this);
@@ -203,12 +206,12 @@ public class MainActivity extends AppCompatActivity
             dispatcher.mustSchedule(job);
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         if (!isOnline()) {
@@ -238,7 +241,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -250,6 +253,19 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        MenuItem hoursButton = menu.findItem(R.id.main_hours_button);
+        hoursButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                Intent hoursIntent = new Intent(getBaseContext(), DiningHallHoursActivity.class);
+                startActivity(hoursIntent);
+                return false;
+            }
+        });
+
+//        MenuItem searchButton = menu.findItem(R.id.main_action_search);
+
         return true;
     }
 
@@ -284,7 +300,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         startActivity(intent);
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -303,6 +319,9 @@ public class MainActivity extends AppCompatActivity
         AsyncTaskRunner runner = new AsyncTaskRunner();
 
         if (!dateRange.contains(currentDateString)) {
+            db.clear();
+            // show uncancellable progress bar while initial data load occurs
+            progress.show();
             runner.execute(url, "true");
         } else {
             runner.execute(url, "false");
@@ -324,54 +343,39 @@ public class MainActivity extends AppCompatActivity
                 // connect to url, set 10 second timeout in case internet connection is slow
                 Document doc = Jsoup.connect(params[0]).timeout(10 * 1000).get();
 
-                Elements diningHalls = doc.select("h3");
+                if (params[1].equals("true")) {
+                    Elements diningHalls = doc.select("h3");
 
-                diningHallNames.clear();
+                    diningHallNames.clear();
 
-                for (Element element : diningHalls)
-                    diningHallNames.add(element.ownText());
+                    for (Element element : diningHalls)
+                        diningHallNames.add(element.ownText());
 
-                // remove duplicates from diningHallNames ArrayList
-                Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
-                diningHallNames.clear();
-                diningHallNames.addAll(diningHallTemp);
+                    // remove duplicates from diningHallNames ArrayList
+                    Set<String> diningHallTemp = new LinkedHashSet<>(diningHallNames);
+                    diningHallNames.clear();
+                    diningHallNames.addAll(diningHallTemp);
 
-                // sort dining halls alphabetically
-                Collections.sort(diningHallNames);
-
-                List<String> cachedDiningHallNames = new ArrayList<>();
-
-                List<MealItem> allMealItems = db.getAllMealItems();
-
-                String diningHall = "";
-
-                for (MealItem mealItem : allMealItems) {
-                    if (!mealItem.getHall().equals(diningHall)) {
-                        cachedDiningHallNames.add(mealItem.getHall());
-                        diningHall = mealItem.getHall();
-                    }
-                }
-
-                Collections.sort(cachedDiningHallNames);
-
-                boolean match = (diningHallNames.size() == cachedDiningHallNames.size() && diningHallNames.equals(cachedDiningHallNames));
-
-                if (!match || params[1].equals("true")) {   // if params[1] is true then cached date range does not include current date
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            // show uncancellable progress bar while data load occurs
-                            progress.show();
-                        }
-                    });
-
-                    db.clear();
                     // get meals from all dining halls
-                    for (String hall : diningHallNames) {
-                        getMeals(hall);
+                    for (String diningHall : diningHallNames) {
+                        getMeals(diningHall);
+                    }
+                } else {
+                    diningHallNames.clear();
+
+                    List<MealItem> allMealItems = db.getAllMealItems();
+
+                    String diningHall = "";
+
+                    for (MealItem mealItem : allMealItems) {
+                        if (!mealItem.getHall().equals(diningHall)) {
+                            diningHallNames.add(mealItem.getHall());
+                            diningHall = mealItem.getHall();
+                        }
                     }
                 }
+
+                Collections.sort(diningHallNames);
 
                 getHours();
 
@@ -515,7 +519,7 @@ public class MainActivity extends AppCompatActivity
                         int month = currentTime.get(Calendar.MONTH);
                         int day = currentTime.get(Calendar.DAY_OF_MONTH);
 
-                        DateFormat dateFormat = new SimpleDateFormat("hh:mm a");
+                        DateFormat dateFormat = new SimpleDateFormat("hh:mm a", Locale.US);
 
                         Date openDate = dateFormat.parse(s[0]), closeDate = dateFormat.parse(s[1]);
 
@@ -529,6 +533,10 @@ public class MainActivity extends AppCompatActivity
                             case ("Breakfast"):
                                 breakfastOpeningHours.put(diningHall, openTime);
                                 breakfastClosingHours.put(diningHall, closeTime);
+                                break;
+                            case ("Brunch"):
+                                brunchOpeningHours.put(diningHall, openTime);
+                                brunchClosingHours.put(diningHall, closeTime);
                                 break;
                             case ("Lunch"):
                                 lunchOpeningHours.put(diningHall, openTime);
@@ -578,10 +586,7 @@ public class MainActivity extends AppCompatActivity
     public boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-            return true;
-        }
-        return false;
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     public void reload(int error) {
@@ -607,9 +612,9 @@ public class MainActivity extends AppCompatActivity
             public ViewHolder(View v) {
                 super(v);
                 diningHallLayout = v;
-                header = (TextView) v.findViewById(R.id.firstLine);
-                footer = (TextView) v.findViewById(R.id.secondLine);
-                infoButton = (ImageButton) v.findViewById(R.id.dining_hall_map_button);
+                header = v.findViewById(R.id.firstLine);
+                footer = v.findViewById(R.id.secondLine);
+                infoButton = v.findViewById(R.id.dining_hall_map_button);
             }
         }
 
@@ -643,7 +648,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, final int position) {
+        public void onBindViewHolder(final ViewHolder holder, final int position) {
             // get element from data set at this position
             // replace the contents of the view with that element
             try {
@@ -653,7 +658,7 @@ public class MainActivity extends AppCompatActivity
                 View.OnClickListener diningHallListener = new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Object obj = getItemAtPosition(position);
+                        Object obj = getItemAtPosition(holder.getAdapterPosition());
                         Intent diningHallMenuIntent = new Intent(getBaseContext(), DiningHallActivity.class);
                         diningHallMenuIntent.putExtra("SelectedDiningHall", obj.toString());
                         diningHallMenuIntent.putExtra("ActivityLevel", activityLevelMap.get(obj.toString()));
@@ -667,7 +672,7 @@ public class MainActivity extends AppCompatActivity
                 holder.infoButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Object obj = getItemAtPosition(position);
+                        Object obj = getItemAtPosition(holder.getAdapterPosition());
                         Intent diningHallInfoIntent = new Intent(getBaseContext(), DiningHallInfoActivity.class);
                         diningHallInfoIntent.putExtra("SelectedDiningHall", obj.toString());
                         startActivity(diningHallInfoIntent);
@@ -681,24 +686,45 @@ public class MainActivity extends AppCompatActivity
                 Calendar breakfastOpeningCalendar = breakfastOpeningHours.get(diningHall);
                 Calendar lunchOpeningCalendar = lunchOpeningHours.get(diningHall);
                 Calendar dinnerOpeningCalendar = dinnerOpeningHours.get(diningHall);
+                Calendar brunchOpeningCalendar = brunchOpeningHours.get(diningHall);
+
                 Calendar breakfastClosingCalendar = breakfastClosingHours.get(diningHall);
                 Calendar lunchClosingCalendar = lunchClosingHours.get(diningHall);
                 Calendar dinnerClosingCalendar = dinnerClosingHours.get(diningHall);
+                Calendar brunchClosingCalendar = brunchClosingHours.get(diningHall);
 
                 int breakfastOpen = (breakfastOpeningCalendar != null) ? breakfastOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
                 int lunchOpen = (lunchOpeningCalendar != null) ? lunchOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
                 int dinnerOpen = (dinnerOpeningCalendar != null) ? dinnerOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+                int brunchOpen = (brunchOpeningCalendar != null) ? brunchOpeningCalendar.get(Calendar.HOUR_OF_DAY) : 0;
 
                 int breakfastClose = (breakfastClosingCalendar != null) ? breakfastClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
                 int lunchClose = (lunchClosingCalendar != null) ? lunchClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
                 int dinnerClose = (dinnerClosingCalendar != null) ? dinnerClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
+                int brunchClose = (brunchClosingCalendar != null) ? brunchClosingCalendar.get(Calendar.HOUR_OF_DAY) : 0;
 
                 holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
 
                 if (breakfastOpen == 0 && breakfastClose == 0 && currentHour < 11) {
-                    holder.footer.setText("Closed for breakfast");
-                    holder.footer.setTextColor(Color.RED);
-                } else if (lunchOpen == 0 && lunchClose == 0 && currentHour < 17) {
+                    if (currentHour < brunchOpen ||
+                            (currentHour <= brunchOpen && currentMinute < brunchOpeningHours.get(diningHall).get(Calendar.MINUTE))) {
+                        Calendar brunchOpenCal = brunchOpeningHours.get(diningHall);
+                        String period = ((int) brunchOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";    // cast to int is redundant but a bug in Android Studio makes it throw errors otherwise
+                        String minute = ((int) brunchOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(brunchOpenCal.get(Calendar.MINUTE));
+                        holder.footer.setText("Opening for brunch at " + brunchOpenCal.get(Calendar.HOUR) + ":" + minute + " " + period);
+                        holder.footer.setTextColor(Color.RED);
+                    } else if (currentHour < brunchClose ||
+                            currentHour <= brunchClose && currentMinute < brunchClosingHours.get(diningHall).get(Calendar.MINUTE)) {
+                        Calendar brunchCloseCal = brunchClosingHours.get(diningHall);
+                        String period = ((int) brunchCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
+                        String minute = ((int) brunchCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(brunchCloseCal.get(Calendar.MINUTE));
+                        holder.footer.setText("Open for brunch until " + brunchCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
+                    } else {
+                        holder.footer.setText("Closed for breakfast");
+                        holder.footer.setTextColor(Color.RED);
+                    }
+                }
+               else if (lunchOpen == 0 && lunchClose == 0 && currentHour < 17) {
                     holder.footer.setText("Closed for lunch");
                     holder.footer.setTextColor(Color.RED);
                 } else if (dinnerOpen == 0 && dinnerClose == 0) {
@@ -762,7 +788,7 @@ public class MainActivity extends AppCompatActivity
                     Calendar dinnerCloseCal = dinnerClosingHours.get(diningHall);
                     String period = ((int) dinnerCloseCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
                     String minute = ((int) dinnerCloseCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(dinnerCloseCal.get(Calendar.MINUTE));
-                    holder.footer.setText("Closed for tonight at " + dinnerCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
+                    holder.footer.setText("Closed tonight at " + dinnerCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
             } catch (IndexOutOfBoundsException e) {
