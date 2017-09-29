@@ -124,7 +124,7 @@ public class DiningHallActivity extends AppCompatActivity {
 
         // TODO: CHOOSE MEAL BASED ON DINING PERIODS FOR EACH DINING HALL
 
-        selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
+//        selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
         activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
         activityLevelProgressBar = findViewById(R.id.activityLevel);
 
@@ -339,6 +339,8 @@ public class DiningHallActivity extends AppCompatActivity {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            selectedDiningHall = getIntent().getStringExtra("SelectedDiningHall");
+
             switch (item.getItemId()) {
                 case R.id.bottom_breakfast_button:
                     getMeals(selectedDiningHall, "Breakfast");
@@ -381,6 +383,10 @@ public class DiningHallActivity extends AppCompatActivity {
 
         originalMenuItems = new ArrayList<>(menuItems);
         originalSections = new ArrayList<>(sections);
+
+        if (menuItems.isEmpty() && sections.isEmpty()) {
+            Snackbar.make(findViewById(R.id.menuRecyclerView), getResources().getString(R.string.no_items_loaded), Snackbar.LENGTH_SHORT).show();
+        }
 
         updateRecyclerView();
     }

@@ -254,15 +254,15 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
 
-        MenuItem hoursButton = menu.findItem(R.id.main_hours_button);
-        hoursButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem menuItem) {
-                Intent hoursIntent = new Intent(getBaseContext(), DiningHallHoursActivity.class);
-                startActivity(hoursIntent);
-                return false;
-            }
-        });
+//        MenuItem hoursButton = menu.findItem(R.id.main_hours_button);
+//        hoursButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//            @Override
+//            public boolean onMenuItemClick(MenuItem menuItem) {
+//                Intent hoursIntent = new Intent(getBaseContext(), DiningHallHoursActivity.class);
+//                startActivity(hoursIntent);
+//                return false;
+//            }
+//        });
 
 //        MenuItem searchButton = menu.findItem(R.id.main_action_search);
 
@@ -547,7 +547,6 @@ public class MainActivity extends AppCompatActivity
                                 dinnerClosingHours.put(diningHall, closeTime);
                                 break;
                             default:
-                                return false;
                         }
                     }
                 }
@@ -724,7 +723,7 @@ public class MainActivity extends AppCompatActivity
                         holder.footer.setTextColor(Color.RED);
                     }
                 }
-               else if (lunchOpen == 0 && lunchClose == 0 && currentHour < 17) {
+               else if (lunchOpen == 0 && lunchClose == 0 && brunchOpen == 0 && brunchClose == 0 && currentHour < 17) {
                     holder.footer.setText("Closed for lunch");
                     holder.footer.setTextColor(Color.RED);
                 } else if (dinnerOpen == 0 && dinnerClose == 0) {
@@ -735,7 +734,7 @@ public class MainActivity extends AppCompatActivity
                 else if (currentHour < breakfastOpen ||
                         (currentHour <= breakfastOpen && currentMinute < breakfastOpeningHours.get(diningHall).get(Calendar.MINUTE))) {
                     Calendar breakfastOpenCal = breakfastOpeningHours.get(diningHall);
-                    String period = ((int) breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";    // cast to int is redundant but a bug in Android Studio makes it throw errors otherwise
+                    String period = ((int) breakfastOpenCal.get(Calendar.AM_PM) == 0) ? "AM" : "PM";
                     String minute = ((int) breakfastOpenCal.get(Calendar.MINUTE) == 0) ? "00" : Integer.toString(breakfastOpenCal.get(Calendar.MINUTE));
                     holder.footer.setText("Opening for breakfast at " + breakfastOpenCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
