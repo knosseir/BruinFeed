@@ -681,6 +681,7 @@ public class MainActivity extends AppCompatActivity
                 Calendar cal = Calendar.getInstance();
                 int currentHour = cal.get(Calendar.HOUR_OF_DAY);
                 int currentMinute = cal.get(Calendar.MINUTE);
+                int currentDay = cal.get(Calendar.DAY_OF_WEEK);
 
                 Calendar breakfastOpeningCalendar = breakfastOpeningHours.get(diningHall);
                 Calendar lunchOpeningCalendar = lunchOpeningHours.get(diningHall);
@@ -704,7 +705,7 @@ public class MainActivity extends AppCompatActivity
 
                 holder.footer.setTextColor(ContextCompat.getColor(getBaseContext(), R.color.Open));
 
-                if (breakfastOpen == 0 && breakfastClose == 0 && currentHour < 11) {
+                if (breakfastOpen == 0 && breakfastClose == 0 && currentHour < 15 && (currentDay == Calendar.SATURDAY || currentDay == Calendar.SUNDAY)) {
                     if (currentHour < brunchOpen ||
                             (currentHour <= brunchOpen && currentMinute < brunchOpeningHours.get(diningHall).get(Calendar.MINUTE))) {
                         Calendar brunchOpenCal = brunchOpeningHours.get(diningHall);

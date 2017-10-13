@@ -109,9 +109,17 @@ public class DiningHallActivity extends AppCompatActivity {
 
         // get current hour of day
         int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
 
-        // pick default meal based on time of day
-        if (currentHour < 11) {
+        // pick default meal based on time of day and day of week
+        if ((currentDay == Calendar.SATURDAY || currentDay == Calendar.SUNDAY) && currentHour < 17) {
+            meal = "Lunch"; // brunch has the same menu as brunch
+            Menu menu = navigation.getMenu();
+            menu.getItem(0).setTitle("Brunch");
+            menu.removeItem(1);
+            navigation.setSelectedItemId(R.id.bottom_breakfast_button);
+        }
+        else if (currentHour < 11) {
             navigation.setSelectedItemId(R.id.bottom_breakfast_button);
             meal = "Breakfast";
         } else if (currentHour < 17) {
@@ -128,7 +136,7 @@ public class DiningHallActivity extends AppCompatActivity {
         activityLevel = getIntent().getIntExtra("ActivityLevel", 0);
         activityLevelProgressBar = findViewById(R.id.activityLevel);
 
-        setTitle(meal + " at " + selectedDiningHall);
+        // setTitle(meal + " at " + selectedDiningHall);
 
         if (activityLevel == 0) {
             activityLevelTextView.setText("Activity Level at " + selectedDiningHall + " is currently unavailable");
@@ -333,7 +341,6 @@ public class DiningHallActivity extends AppCompatActivity {
         }
     }
 
-
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -343,8 +350,15 @@ public class DiningHallActivity extends AppCompatActivity {
 
             switch (item.getItemId()) {
                 case R.id.bottom_breakfast_button:
-                    getMeals(selectedDiningHall, "Breakfast");
-                    setTitle("Breakfast at " + selectedDiningHall);
+                    if (item.getTitle().equals("Brunch")) {
+                        // brunch menu data is the same as lunch menu data
+                        getMeals(selectedDiningHall, "Lunch");
+                        setTitle("Brunch at " + selectedDiningHall);
+                    }
+                    else {
+                        getMeals(selectedDiningHall, "Breakfast");
+                        setTitle("Breakfast at " + selectedDiningHall);
+                    }
                     break;
                 case R.id.bottom_lunch_button:
                     getMeals(selectedDiningHall, "Lunch");
@@ -395,7 +409,7 @@ public class DiningHallActivity extends AppCompatActivity {
         SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
         SharedPreferences.Editor editor = filters.edit();
 
-        String mealDescriptorArray[] = { vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy, no_shellfish };
+        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy, no_shellfish};
 
         // uncheck all filters by default
         for (String descriptor : mealDescriptorArray) {
