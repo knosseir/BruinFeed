@@ -79,7 +79,7 @@
             android:name="com.knosseir.admin.bruinfeed.DiningHallHoursActivity"
             android:label="@string/title_activity_dining_hall_hours"
             android:parentActivityName="com.knosseir.admin.bruinfeed.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme">
         </activity>
 
         <activity

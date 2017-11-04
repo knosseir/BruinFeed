@@ -56,6 +56,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -75,6 +76,14 @@ public class MainActivity extends AppCompatActivity
     private static final String MainTag = "MainActivity";
     private static final String url = "http://menu.dining.ucla.edu/Menus";
 
+    private static final String breakfastLabel = "BREAKFAST";
+    private static final String lunchLabel = "LUNCH";
+    private static final String brunchLabel = "BRUNCH";
+    private static final String dinnerLabel = "DINNER";
+    private static final String lateNightLabel = "LATE_NIGHT";
+
+    private static final ArrayList<String> mealLabels = new ArrayList<>(Arrays.asList(breakfastLabel, lunchLabel, brunchLabel, dinnerLabel, lateNightLabel));
+
     private ArrayList<String> diningHallNames = new ArrayList<>();
     private Map<String, Integer> activityLevelMap = new HashMap<>();
 
@@ -90,8 +99,13 @@ public class MainActivity extends AppCompatActivity
     private Map<String, Calendar> brunchOpeningHours = new HashMap<>();
     private Map<String, Calendar> brunchClosingHours = new HashMap<>();
 
+    private Map<String, Calendar> lateNightOpeningHours = new HashMap<>();
+    private Map<String, Calendar> lateNightClosingHours = new HashMap<>();
+
     private SwipeRefreshLayout diningHallRefresh;
     ProgressDialog progress;
+
+    boolean doneLoading = false;
 
     Calendar currentTime = Calendar.getInstance();
 
@@ -187,7 +201,7 @@ public class MainActivity extends AppCompatActivity
                     .setRequiresCharging(false);   // job will execute whether or not device is charging due to low CPU/RAM footprint
 
             // builder.build() will return <= 0 if there was an issue in starting the job
-            if (scheduler.schedule(builder.build()) <= 0) {
+            if (scheduler.schedule(builder.build()) == JobScheduler.RESULT_FAILURE) {
                 Log.e(MainTag, "Job failed to start");
             }
         }
@@ -254,15 +268,48 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
 
-//        MenuItem hoursButton = menu.findItem(R.id.main_hours_button);
-//        hoursButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-//            @Override
-//            public boolean onMenuItemClick(MenuItem menuItem) {
-//                Intent hoursIntent = new Intent(getBaseContext(), DiningHallHoursActivity.class);
-//                startActivity(hoursIntent);
-//                return false;
-//            }
-//        });
+        MenuItem hoursButton = menu.findItem(R.id.main_hours_button);
+        hoursButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                if (doneLoading) {
+                    Intent hoursIntent = new Intent(getBaseContext(), DiningHallHoursActivity.class);
+
+                    hoursIntent.putExtra("diningHallNames", diningHallNames);
+
+                    for (String hall : diningHallNames) {
+                        Calendar breakfastOpen = breakfastOpeningHours.get(hall);
+                        Calendar breakfastClose = breakfastClosingHours.get(hall);
+                        Calendar lunchOpen = lunchOpeningHours.get(hall);
+                        Calendar lunchClose = lunchClosingHours.get(hall);
+                        Calendar brunchOpen = brunchOpeningHours.get(hall);
+                        Calendar brunchClose = brunchClosingHours.get(hall);
+                        Calendar dinnerOpen = dinnerOpeningHours.get(hall);
+                        Calendar dinnerClose = dinnerClosingHours.get(hall);
+                        Calendar lateNightOpen = lateNightOpeningHours.get(hall);
+                        Calendar lateNightClose = lateNightClosingHours.get(hall);
+
+                        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.US);
+
+                        hoursIntent.putExtra(breakfastLabel + "_open_" + hall, (breakfastOpen != null) ? sdf.format(breakfastOpeningHours.get(hall).getTime()) : "closed");
+                        hoursIntent.putExtra(breakfastLabel + "_close_" + hall, (breakfastClose != null) ? sdf.format(breakfastClosingHours.get(hall).getTime()) : "");
+                        hoursIntent.putExtra(lunchLabel + "_open_" + hall, (lunchOpen != null) ? sdf.format(lunchOpeningHours.get(hall).getTime()) : "closed");
+                        hoursIntent.putExtra(lunchLabel + "_close_" + hall, (lunchClose != null) ? sdf.format(lunchClosingHours.get(hall).getTime()) : "");
+                        hoursIntent.putExtra(brunchLabel + "_open_" + hall, (brunchOpen != null) ? sdf.format(brunchOpeningHours.get(hall).getTime()) : "closed");
+                        hoursIntent.putExtra(brunchLabel + "_close_" + hall, (brunchClose != null) ? sdf.format(brunchClosingHours.get(hall).getTime()) : "");
+                        hoursIntent.putExtra(dinnerLabel + "_open_" + hall, (dinnerOpen != null) ? sdf.format(dinnerOpeningHours.get(hall).getTime()) : "closed");
+                        hoursIntent.putExtra(dinnerLabel + "_close_" + hall, (dinnerClose != null) ? sdf.format(dinnerClosingHours.get(hall).getTime()) : "");
+                        hoursIntent.putExtra(lateNightLabel + "_open_" + hall, (lateNightOpen != null) ? sdf.format(lateNightOpeningHours.get(hall).getTime()) : "closed");
+                        hoursIntent.putExtra(lateNightLabel + "_close_" + hall, (lateNightClose != null) ? sdf.format(lateNightClosingHours.get(hall).getTime()) : "");
+                    }
+
+                    startActivity(hoursIntent);
+                } else {
+                    Snackbar.make(findViewById(R.id.diningHallRecyclerView), "Please wait while dining hours load...", Snackbar.LENGTH_SHORT).show();
+                }
+                return false;
+            }
+        });
 
 //        MenuItem searchButton = menu.findItem(R.id.main_action_search);
 
@@ -326,6 +373,7 @@ public class MainActivity extends AppCompatActivity
         } else {
             runner.execute(url, "false");
             diningHallRefresh.setRefreshing(true);
+            doneLoading = false;
         }
     }
 
@@ -546,6 +594,9 @@ public class MainActivity extends AppCompatActivity
                                 dinnerOpeningHours.put(diningHall, openTime);
                                 dinnerClosingHours.put(diningHall, closeTime);
                                 break;
+                            case ("Late Night"):
+                                lateNightOpeningHours.put(diningHall, openTime);
+                                lateNightClosingHours.put(diningHall, closeTime);
                             default:
                         }
                     }
@@ -566,15 +617,16 @@ public class MainActivity extends AppCompatActivity
             public void run() {
                 mAdapter.notifyDataSetChanged();
                 diningHallRefresh.setRefreshing(false);
+                doneLoading = true;
             }
         });
     }
 
     public String getCachedDateRange(DatabaseHandler db) {
-        List<MealItem> allIMealtems = db.getAllMealItems();
+        List<MealItem> allMealtems = db.getAllMealItems();
         String dateRange = "";
 
-        for (MealItem mealItem : allIMealtems) {
+        for (MealItem mealItem : allMealtems) {
             if (!dateRange.contains(mealItem.getDate())) {
                 dateRange += mealItem.getDate() + " ";
             }
@@ -791,7 +843,7 @@ public class MainActivity extends AppCompatActivity
                     holder.footer.setText("Closed tonight at " + dinnerCloseCal.get(Calendar.HOUR) + ":" + minute + " " + period);
                     holder.footer.setTextColor(Color.RED);
                 }
-            } catch (IndexOutOfBoundsException e) {
+            } catch (Exception e) {
                 Log.e(MainTag, e.toString());
             }
         }

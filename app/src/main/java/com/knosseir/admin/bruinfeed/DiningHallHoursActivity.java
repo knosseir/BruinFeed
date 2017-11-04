@@ -1,55 +1,79 @@
 package com.knosseir.admin.bruinfeed;
 
-import android.os.AsyncTask;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DiningHallHoursActivity extends AppCompatActivity {
+
+    private ArrayList hours = new ArrayList();
+
+    private static final String breakfastLabel = "BREAKFAST";
+    private static final String lunchLabel = "LUNCH";
+    private static final String brunchLabel = "BRUNCH";
+    private static final String dinnerLabel = "DINNER";
+    private static final String lateNightLabel = "LATE_NIGHT";
+
+    private RecyclerView recyclerView;
+    private SimpleHoursAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+    List<SimpleSectionedRecyclerViewAdapter.Section> sections = new ArrayList<>();
+    SimpleSectionedRecyclerViewAdapter mSectionedAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dining_hall_hours_activity);
 
-        AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.execute();
+        Spannable text = new SpannableString("Dining Hours");
+        text.setSpan(new ForegroundColorSpan(Color.BLACK), 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        setTitle(text);
+
+        ArrayList<String> diningHallNames = getIntent().getStringArrayListExtra("diningHallNames");
+
+        Intent intent = getIntent();
+
+        recyclerView = findViewById(R.id.diningHallHoursRecyclerView);
+
+        mLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new SimpleHoursAdapter(getBaseContext(), hours);
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+
+        for (String hall : diningHallNames) {
+            sections.add(new SimpleSectionedRecyclerViewAdapter.Section(hours.size(), hall.toUpperCase()));
+            String breakfastRange = intent.getStringExtra(breakfastLabel + "_open_" + hall) + " - " + intent.getStringExtra(breakfastLabel + "_close_" + hall);
+            String lunchRange = intent.getStringExtra(lunchLabel + "_open_" + hall) + " - " + intent.getStringExtra(lunchLabel + "_close_" + hall);
+            String brunchRange = intent.getStringExtra(brunchLabel + "_open_" + hall) + " - " + intent.getStringExtra(brunchLabel + "_close_" + hall);
+            String dinnerRange = intent.getStringExtra(dinnerLabel + "_open_" + hall) + " - " + intent.getStringExtra(dinnerLabel + "_close_" + hall);
+            String lateNightRange = intent.getStringExtra(lateNightLabel + "_open_" + hall) + " - " + intent.getStringExtra(lateNightLabel + "_close_" + hall);
+
+            hours.add("Breakfast: " + ((breakfastRange.contains("closed")) ? breakfastRange.replace("-", "") : breakfastRange));
+            hours.add("Lunch/Brunch : " + ((brunchRange.contains("closed")) ? lunchRange : brunchRange));
+            hours.add("Dinner: " + ((dinnerRange.contains("closed")) ? dinnerRange.replace("-", "") : dinnerRange));
+            hours.add("Late Night: " + ((lateNightRange.contains("closed")) ? lateNightRange.replace("-", "") : lateNightRange));
+        }
+        updateRecyclerView();
     }
 
-    public class AsyncTaskRunner extends AsyncTask<Void, Void, String> {
-        @Override
-        protected String doInBackground(Void... params) {
-            try {
-                Document doc = Jsoup.connect("http://menu.dining.ucla.edu/Hours").get();
+    public void updateRecyclerView() {
+        // Add adapter to the sectionAdapter
+        SimpleSectionedRecyclerViewAdapter.Section[] array = new SimpleSectionedRecyclerViewAdapter.Section[sections.size()];
+        mSectionedAdapter = new SimpleSectionedRecyclerViewAdapter(getBaseContext(), R.layout.section, R.id.section_text, mAdapter);
+        mSectionedAdapter.setSections(sections.toArray(array));
 
-                Element hoursTable = doc.select("table.hours-table").first();
-                hoursTable.select("a").remove();
-
-                return hoursTable.toString().replaceAll("\\∣", "");
-
-            } catch (IOException e) {
-                Log.e("DiningHallHoursActivity", e.toString());
-                return "";
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String source) {
-            WebView hoursWebView = findViewById(R.id.hours_webview);
-            hoursWebView.setHorizontalScrollBarEnabled(true);
-            WebSettings webSettings = hoursWebView.getSettings();
-            webSettings.setUserAgentString("Mozilla/5.0 (Linux; U; Android 2.2; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1");
-            webSettings.setJavaScriptEnabled(true);
-//            webSettings.setDefaultFontSize(14);
-            hoursWebView.loadDataWithBaseURL(null, source, "text/html", "UTF-8", null);
-        }
+        // Update RecyclerView
+        recyclerView.setAdapter(mSectionedAdapter);
+        mAdapter.notifyDataSetChanged();
     }
 }
