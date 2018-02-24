@@ -18,4 +18,4 @@ BruinFeed is a simple and fast UCLA dining menu application for Android devices.
 * [Material.io](https://material.io/icons/) for providing Material Design icons
 
 
-<a href='https://play.google.com/store/apps/details?id=com.knosseir.admin.bruinfeed&hl=en&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png'/></a>
+<a href='https://play.google.com/store/apps/details?id=com.knosseir.admin.bruinfeed&hl=en&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="240"/></a>
