@@ -111,8 +111,6 @@ public class MealItemActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_favorite:
-                // TODO: ONLY WORKS TWICE
-
                 if (toggleFavorite(selectedItem)) {
                     Snackbar.make(findViewById(R.id.meal_item_scroll_view), R.string.favorites_add, Snackbar.LENGTH_SHORT).show();
                     item.setEnabled(true);

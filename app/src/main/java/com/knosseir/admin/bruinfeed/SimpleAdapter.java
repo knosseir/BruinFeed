@@ -103,8 +103,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                 if (selectedMealItem.getFavorite(mContext)) {
                     Snackbar.make(v, R.string.favorites_add, Snackbar.LENGTH_SHORT).show();
                     notifyDataSetChanged();
-                }
-                else {
+                } else {
                     Snackbar.make(v, R.string.favorites_remove, Snackbar.LENGTH_SHORT).show();
                     notifyDataSetChanged();
                 }

@@ -386,7 +386,7 @@ public class DiningHallActivity extends AppCompatActivity {
         String section = "";
 
         for (MealItem mealItem : allItems) {
-            if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal) && mealItem.getDate().equals(dateString)) {
+            if (mealItem.getHall().equals(selectedDiningHall) && mealItem.getMeal().equals(meal) && mealItem.getDate().equals(dateString) && !mealItem.getName().equals("Menu Filter")) {
                 menuItems.add(mealItem);
                 if (!mealItem.getSection().equals(section)) {
                     sections.add(new SimpleSectionedRecyclerViewAdapter.Section(menuItems.size() - 1, mealItem.getSection()));

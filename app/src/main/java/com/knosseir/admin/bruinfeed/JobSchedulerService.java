@@ -93,7 +93,6 @@ public class JobSchedulerService extends JobService {
                 }
 
             } catch (Exception e) {
-                // TODO: send error to developer, maybe?
                 Log.e(TAG, e.toString());
                 return false;
             }
@@ -154,7 +153,6 @@ public class JobSchedulerService extends JobService {
                 }
 
             } catch (Exception e) {
-                // TODO: send error to developer, maybe?
                 Log.e(TAG, e.toString());
                 return false;
             }

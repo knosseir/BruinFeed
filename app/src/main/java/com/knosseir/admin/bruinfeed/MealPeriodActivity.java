@@ -9,7 +9,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -79,7 +78,7 @@ public class MealPeriodActivity extends AppCompatActivity {
         SharedPreferences filters = getSharedPreferences(FILTER_PREFERENCES_NAME, 0);
         SharedPreferences.Editor editor = filters.edit();
 
-        String mealDescriptorArray[] = { vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy, no_shellfish };
+        String mealDescriptorArray[] = {vegan, vegetarian, no_nuts, no_dairy, no_eggs, no_wheat, no_soy, no_shellfish};
 
         // uncheck all filters by default
         for (String descriptor : mealDescriptorArray) {

@@ -56,7 +56,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -81,8 +80,6 @@ public class MainActivity extends AppCompatActivity
     private static final String brunchLabel = "BRUNCH";
     private static final String dinnerLabel = "DINNER";
     private static final String lateNightLabel = "LATE_NIGHT";
-
-    private static final ArrayList<String> mealLabels = new ArrayList<>(Arrays.asList(breakfastLabel, lunchLabel, brunchLabel, dinnerLabel, lateNightLabel));
 
     private ArrayList<String> diningHallNames = new ArrayList<>();
     private Map<String, Integer> activityLevelMap = new HashMap<>();
@@ -775,8 +772,7 @@ public class MainActivity extends AppCompatActivity
                         holder.footer.setText("Closed for breakfast");
                         holder.footer.setTextColor(Color.RED);
                     }
-                }
-               else if (lunchOpen == 0 && lunchClose == 0 && brunchOpen == 0 && brunchClose == 0 && currentHour < 17) {
+                } else if (lunchOpen == 0 && lunchClose == 0 && brunchOpen == 0 && brunchClose == 0 && currentHour < 17) {
                     holder.footer.setText("Closed for lunch");
                     holder.footer.setTextColor(Color.RED);
                 } else if (dinnerOpen == 0 && dinnerClose == 0) {
