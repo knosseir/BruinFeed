@@ -251,6 +251,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        progress.dismiss();
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -426,16 +432,12 @@ public class MainActivity extends AppCompatActivity
 
                 getActivityLevels(doc);
 
-                updateRecyclerView();
-
             } catch (SocketTimeoutException e) {
                 Log.e(MainTag, e.toString());
-                updateRecyclerView();
                 reload(R.string.connection_timeout);
                 return null;
             } catch (IOException | IllegalArgumentException e) {
                 Log.e(MainTag, e.toString());
-                updateRecyclerView();
                 reload(R.string.retry_connection);
                 return null;
             }
@@ -445,6 +447,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Void result) {
+            updateRecyclerView();
             progress.dismiss();
         }
 
