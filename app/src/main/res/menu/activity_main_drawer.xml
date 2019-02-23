@@ -25,4 +25,13 @@
         </menu>
     </item>
 
+    <item android:title="Other">
+        <menu>
+            <item
+                android:id="@+id/nav_privacy_policy"
+                android:icon="@drawable/baseline_book_black_24dp"
+                android:title="Privacy Policy" />
+        </menu>
+    </item>
+
 </menu>

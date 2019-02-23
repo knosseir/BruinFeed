@@ -11,10 +11,12 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -347,6 +349,14 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_favorites) {
             intent = new Intent(getBaseContext(), FavoritesActivity.class);
+        } else if (id == R.id.nav_privacy_policy) {
+            String url = "https://github.com/knosseir/BruinFeed/blob/master/privacy_policy.md";
+            CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+            builder.setToolbarColor(ContextCompat.getColor(MainActivity.this, R.color.BruinGold));
+            CustomTabsIntent customTabsIntent = builder.build();
+            customTabsIntent.launchUrl(this, Uri.parse(url));
+
+            return true;
         }
 
         startActivity(intent);
