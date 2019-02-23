@@ -19,3 +19,14 @@ BruinFeed is a simple and fast UCLA dining menu application for Android devices.
 
 
 <a href='https://play.google.com/store/apps/details?id=com.knosseir.admin.bruinfeed&hl=en&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width="240"/></a>
+
+
+## Screenshots
+<img src="https://imgur.com/iSlwyfa.jpg" width="320">
+<img src="https://imgur.com/AK2JCms.jpg" width="320">
+<img src="https://imgur.com/IYx9Ro1.jpg" width="320">
+<img src="https://imgur.com/MwMeAaT.jpg" width="320">
+<img src="https://imgur.com/N8qwoWN.jpg" width="320">
+<img src="https://imgur.com/uhuhwT9.jpg" width="320">
+<img src="https://imgur.com/mv3zTD1.jpg" width="320">
+<img src="https://imgur.com/qnYMsBP.jpg" width="320">
